@@ -1,0 +1,85 @@
+session:
+  id: repo-manager-cli-20260806
+  topic: "repo-manager CLI: multi-repo workspace management design"
+  created: 2026-08-06T00:00:00Z
+  updated: 2026-08-06T00:00:00Z
+  phase: flame-complete
+  context_doc: /Users/alex/work/services/docs/repo-manager-architecture.md
+
+spark:
+  batches_generated: 2
+  total_ideas: 10
+  favorites: []
+  favorites_note: "User delegated selection ('you decide'); Red Hat inferred from source artifact."
+  domains_used:
+    - Architecture/Command model
+    - Safety/Recoverability
+    - Performance/Cost model
+    - Developer experience/Setup cost
+    - Delivery sequencing/Prior art
+    - Testing/Pure-logic seam
+    - Correctness/Discovery invariants
+    - Testing/Subprocess seam
+    - Output contract/Automation
+    - Scope/Shell composition
+  domains_remaining:
+    - Observability/Operation log
+    - Integration/Codex skill boundary
+    - Config lifecycle/Migration
+    - Failure modes/Partial batch recovery
+    - Extreme/Edge cases
+  techniques_used:
+    - analogy
+    - inversion
+    - first-principles
+    - scamper-eliminate
+    - scamper-substitute
+    - what-if
+  provocations: [S2-5]
+
+flame:
+  ideas_evaluated: 10
+  shortlist:
+    - id: S2-1
+      rank: 1
+      title: "Pure policy function"
+      impact: 4
+      feasibility: 5
+      retrofit_cost: very-high
+    - id: S2-4
+      rank: 2
+      title: "Reason code registry"
+      impact: 4
+      feasibility: 5
+      retrofit_cost: high
+    - id: S1-4+S2-5
+      rank: 3
+      title: "Derive-first config, absorbing selection-as-primitive"
+      impact: 4
+      feasibility: 5
+      retrofit_cost: high
+    - id: S1-3
+      rank: 4
+      title: "Parallel fetch with dated staleness"
+      impact: 4
+      feasibility: 5
+      retrofit_cost: low
+    - id: S1-2+S1-1
+      rank: 5
+      title: "Trash instead of clean, with plan-gated discard"
+      impact: 4
+      feasibility: 5
+      retrofit_cost: low-but-ordered
+  cut:
+    - id: S1-5
+      reason: "A sequencing question, not a feature. Resolves once v1 pain is named."
+    - id: S2-2
+      reason: "Narrow version is ~10 lines. Just write it; no brief needed."
+    - id: S2-3
+      reason: "Premature test infrastructure. Defer until fixture setup hurts."
+  scoring_method: "six-hats-rapid + impact/feasibility + retrofit-cost tiebreak"
+  open_question: "Which for-loop do you retype every morning? git log means summaries are v1; git pull means update/sync is v1."
+
+forge:
+  concepts_shaped: 0
+  briefs_generated: []
