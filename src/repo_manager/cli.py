@@ -336,6 +336,71 @@ def version() -> None:
     console.print(__version__)
 
 
+_MANUAL = """\
+[bold]repo-manager[/bold] — work safely across many independent Git repositories
+
+[bold]Getting started[/bold]
+  repo-manager init <path> [--name N] [--yes]   Scan a workspace, write a profile
+  repo-manager status [--fetch]                 Show state of every repo
+  repo-manager profiles                         List profiles, mark the active one
+
+[bold]Commands[/bold]
+  init      Discover repositories and save a profile. Performs no git mutation.
+  status    Report each repository's state. Read-only unless --fetch is passed.
+  profiles  List known profiles.
+  version   Print the version.
+  help      Show this manual.
+
+[bold]Common options[/bold]
+  --project N   Use profile N instead of the active one.
+  --group G     Limit to repositories tagged with group G.
+  --repo R      Limit to a single repository (by name or path).
+  --fetch       Fetch from the remote before computing ahead/behind (status).
+  --json        Emit machine-readable JSON instead of a table.
+  --jobs N      Parallel workers for reads and fetches (default 8).
+  --yes / -y    Non-interactive; take all discovered repos (init).
+
+[bold]Repository states[/bold]
+  ready                 Clean, tracking, behind. The only default-updatable state.
+  current               Clean and up to date with upstream.
+  dirty                 Uncommitted staged / unstaged / untracked changes.
+  in-progress           Mid rebase, merge, cherry-pick, revert, or bisect. Never touched.
+  detached              HEAD is a commit, not a branch.
+  ahead                 Local commits not on the remote. No fast-forward possible.
+  diverged              Both sides moved. Needs explicit action.
+  no-upstream           Branch has no tracking configuration.
+  default-branch-unknown  Could not infer a default branch; blocks switch-default.
+  ambiguous-remote      Several remotes, none named 'origin'. Configure one.
+  remote-unavailable    Fetch failed. Remote state is unknown, never guessed.
+
+[dim]Note: without --fetch, the ahead/behind column shows 'no-fetch' rather than
+possibly-stale numbers. Stale remote refs are never presented as current state.[/dim]
+
+[bold]Changes column[/bold]
+  Ns staged   Nm modified   N? untracked   Nu unmerged
+
+[bold]Exit codes[/bold]
+  0  All good or already current.
+  1  One or more repositories failed.
+  2  Invalid command, configuration, or selection.
+  3  One or more operations were safety-skipped.
+
+[bold]Examples[/bold]
+  repo-manager init ~/work/services --name services --yes
+  repo-manager status --fetch
+  repo-manager status --group backend --json
+  repo-manager status --repo api --fetch
+
+Run [bold]repo-manager <command> --help[/bold] for the full option list of any command.
+"""
+
+
+@app.command(name="help")
+def help_() -> None:
+    """Show a quick manual with commands, states, and examples."""
+    console.print(_MANUAL, highlight=False)
+
+
 def main() -> None:
     app()
 

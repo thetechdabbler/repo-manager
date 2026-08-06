@@ -103,6 +103,15 @@ def test_status_without_profile_errors(home):
     assert "no project" in result.stderr.lower()
 
 
+def test_help_command_lists_commands_and_states(home):
+    result = runner.invoke(app, ["help"])
+    assert result.exit_code == 0
+    assert "repo-manager" in result.stdout
+    assert "status" in result.stdout
+    assert "remote-unavailable" in result.stdout
+    assert "Exit codes" in result.stdout
+
+
 def test_init_on_empty_dir_fails(home, tmp_path):
     empty = tmp_path / "empty"
     empty.mkdir()
