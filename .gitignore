@@ -9,3 +9,10 @@ build/
 .coverage
 htmlcov/
 .DS_Store
+
+# mkdocs build output
+site/
+.cache/
+
+# local ideation scratch (not for publication)
+.specs-ideation/

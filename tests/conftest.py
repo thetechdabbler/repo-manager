@@ -459,7 +459,7 @@ class WorkspaceBuilder:
         seed = self.seeds / "payments-api"
         git(self.seeds, "clone", "-q", str(bare), str(seed))
         git(seed, "switch", "-q", "-c", "dev")
-        commit_file(seed, "agent.py", "# agent\n", "Agent commit")
+        commit_file(seed, "api.py", "# api\n", "API commit")
         git(seed, "push", "-q", "origin", "dev")
         nested.parent.mkdir(parents=True, exist_ok=True)
         git(nested.parent, "clone", "-q", "--branch", "dev", str(bare), str(nested))

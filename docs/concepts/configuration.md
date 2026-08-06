@@ -1,0 +1,80 @@
+# Configuration
+
+A profile describes one workspace: where it is, which repositories belong to it, how
+they group, and the policy for operating on them. Profiles are TOML, written with
+comment-preserving formatting so you can annotate them by hand.
+
+## Creating a profile
+
+`init` discovers repositories and writes the profile for you. It performs no git
+mutation.
+
+```bash
+repo-manager init ~/work/services --name services
+```
+
+Interactively it shows a selectable table with each repository's branch and inferred
+default. Non-interactively, `--yes` selects everything discovered.
+
+## Profile schema
+
+```toml
+schema_version = 1
+
+[project]
+name = "services"
+root = "/Users/alex/work/services"
+default_remote = "origin"
+
+[discovery]
+max_depth = 4
+include_root_repository = true
+exclude = [".git", ".venv", "node_modules", "outputs", ".pytest_cache"]
+include_linked_worktrees = false
+
+[policy]
+pull_mode = "ff-only"
+skip_dirty = true
+fetch_before_update = true
+fetch_before_status = false
+fetch_timeout_seconds = 30
+jobs = 8
+
+[[repositories]]
+path = "."
+name = "workspace-root"
+default_branch = "main"
+groups = ["root"]
+
+[[repositories]]
+path = "services/payments-api"
+default_branch = "dev"
+groups = ["services", "payments"]
+remote = "origin"
+```
+
+### Repositories
+
+Each `[[repositories]]` entry has a `path` relative to `root` (paths outside the root
+are rejected), an optional `name`, an optional `groups` list, an optional
+`default_branch` override, and an optional `remote` override.
+
+Groups are defined exactly one way: the per-repository `groups` array. Any command
+that accepts `--group` matches against it.
+
+## Default-branch inference
+
+When you do not set `default_branch`, it is inferred in this order, and the source is
+recorded so you can tell a proven default from a heuristic:
+
+1. A profile override.
+2. `refs/remotes/<remote>/HEAD`.
+3. The current branch's upstream, if it is a common default name.
+4. An existing `main`, then `master`, then `dev`.
+5. Otherwise `ambiguous`, which shows as `default-branch-unknown` and requires you to
+   set the value.
+
+## Storage and overrides
+
+Profiles live under `~/.config/repo-manager/projects/`. Set `REPO_MANAGER_HOME` to
+relocate that directory.

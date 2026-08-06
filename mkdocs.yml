@@ -1,0 +1,52 @@
+site_name: repo-manager
+site_description: Work safely with a directory tree of many independent Git repositories
+site_url: https://example.github.io/repo-manager/
+repo_url: https://github.com/example/repo-manager
+repo_name: repo-manager
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Guides:
+      - Daily status: guides/daily-status.md
+      - Updating: guides/updating.md
+      - Recovering local work: guides/recovery.md
+      - Summaries: guides/summaries.md
+  - Concepts:
+      - Safety model: concepts/safety-model.md
+      - Configuration: concepts/configuration.md
+  - Reference:
+      - Commands: reference/commands.md
+  - Contributing: contributing.md

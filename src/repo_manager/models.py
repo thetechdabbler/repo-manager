@@ -39,6 +39,23 @@ class Classification(str, Enum):
     REMOTE_UNAVAILABLE = "remote-unavailable"
 
 
+# Canonical one-line meaning of each state. Single source for the docs generator
+# and any user-facing help, so prose can never drift from the enum.
+CLASSIFICATION_HELP: dict[str, str] = {
+    Classification.READY.value: "Clean, tracking, behind. The only state eligible for a default fast-forward update.",
+    Classification.CURRENT.value: "Clean and up to date with its upstream.",
+    Classification.DIRTY.value: "Uncommitted staged, unstaged, or untracked changes are present.",
+    Classification.IN_PROGRESS.value: "A rebase, merge, cherry-pick, revert, or bisect is in progress. Never mutated.",
+    Classification.DETACHED.value: "HEAD points at a commit rather than a branch.",
+    Classification.NO_UPSTREAM.value: "The current branch has no tracking configuration.",
+    Classification.DEFAULT_BRANCH_UNKNOWN.value: "The default branch could not be inferred. Blocks switch-default.",
+    Classification.AMBIGUOUS_REMOTE.value: "Several remotes exist and none is named 'origin'. Needs configuration.",
+    Classification.AHEAD.value: "Local commits are not on the remote; a fast-forward is not possible.",
+    Classification.DIVERGED.value: "Local and upstream have both moved. Needs manual reconciliation.",
+    Classification.REMOTE_UNAVAILABLE.value: "A fetch failed, so remote state is unknown. Never guessed from stale refs.",
+}
+
+
 class Relationship(str, Enum):
     CURRENT = "current"
     AHEAD = "ahead"
