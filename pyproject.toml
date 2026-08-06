@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "repo-manager"
+version = "0.1.0"
+description = "Work safely with a directory tree of many independent Git repositories"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer>=0.12",
+    "rich>=13.7",
+    "tomlkit>=0.13",
+]
+
+[project.scripts]
+repo-manager = "repo_manager.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/repo_manager"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

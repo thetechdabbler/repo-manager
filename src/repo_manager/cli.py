@@ -1,0 +1,344 @@
+"""Command-line interface.
+
+Phase 1 ships two commands: `init` (discover a workspace and write a profile, no git
+mutation) and `status` (read-only unless --fetch). Every command resolves a profile,
+selects repositories, builds a report structure, and hands it to a renderer.
+"""
+
+from __future__ import annotations
+
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.prompt import Confirm
+from rich.table import Table
+
+from . import __version__, config
+from .config import (
+    ConfigError,
+    DiscoveryConfig,
+    PolicyConfig,
+    Profile,
+    RepositoryConfig,
+)
+from .discovery import DEFAULT_EXCLUDES, discover_worktrees
+from .git_backend import GitBackend
+from .models import StatusReport
+from .output import render_status_json, render_status_table
+from .repository_service import RepoSpec, RepositoryService
+
+app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Work safely with a directory tree of many independent Git repositories.",
+)
+
+console = Console()
+err_console = Console(stderr=True)
+
+# Exit codes (see the architecture doc).
+EXIT_OK = 0
+EXIT_FAILURE = 1
+EXIT_USAGE = 2
+EXIT_SKIPPED = 3
+
+
+def _fail(message: str, code: int = EXIT_USAGE) -> "typer.Exit":
+    err_console.print(f"[red]error:[/red] {message}", highlight=False)
+    return typer.Exit(code)
+
+
+# -- profile / selection helpers ----------------------------------------------------
+
+
+def _resolve_profile(name: Optional[str]) -> Profile:
+    target = name or config.load_active_project()
+    if not target:
+        available = config.list_profiles()
+        hint = (
+            f" Known profiles: {', '.join(available)}."
+            if available
+            else " Run `repo-manager init <path>` first."
+        )
+        raise _fail(f"no project selected and no active project set.{hint}")
+    try:
+        return config.load_profile(target)
+    except ConfigError as exc:
+        raise _fail(str(exc))
+
+
+def _select(
+    profile: Profile, group: Optional[str], repo: Optional[str]
+) -> list[RepositoryConfig]:
+    if repo and group:
+        raise _fail("pass at most one of --repo and --group")
+    if repo:
+        matches = [r for r in profile.repositories if r.name == repo or r.path == repo]
+        if not matches:
+            raise _fail(f"no repository named '{repo}' in profile '{profile.name}'")
+        return matches
+    if group:
+        matches = profile.repos_in_group(group)
+        if not matches:
+            groups = ", ".join(profile.all_groups()) or "none defined"
+            raise _fail(
+                f"no repositories in group '{group}'. Groups: {groups}"
+            )
+        return matches
+    return list(profile.repositories)
+
+
+def _specs(profile: Profile, selected: list[RepositoryConfig]) -> list[RepoSpec]:
+    specs = []
+    for r in selected:
+        abs_path = (profile.root / r.path).resolve()
+        specs.append(
+            RepoSpec(
+                name=r.name,
+                absolute_path=abs_path,
+                relative_path=r.path,
+                groups=r.groups,
+                remote=r.remote or profile.default_remote,
+                default_branch_override=r.default_branch,
+            )
+        )
+    return specs
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+# -- commands ------------------------------------------------------------------------
+
+
+@app.command()
+def status(
+    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    fetch: bool = typer.Option(False, "--fetch", help="Fetch before computing remote state."),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers for reads/fetches."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Show repository status. Read-only unless --fetch is passed."""
+    profile = _resolve_profile(project)
+    selected = _select(profile, group, repo)
+    specs = _specs(profile, selected)
+
+    missing = [s for s in specs if not (s.absolute_path / ".git").exists()]
+    warnings: list[str] = [
+        f"{s.relative_path}: not a git worktree on disk ({s.absolute_path})"
+        for s in missing
+    ]
+
+    worker_count = jobs or profile.policy.jobs
+    do_fetch = fetch or profile.policy.fetch_before_status
+    service = RepositoryService(jobs=worker_count)
+    snapshots = service.snapshot_all(
+        [s for s in specs if s not in missing],
+        fetch=do_fetch,
+        fetch_timeout=float(profile.policy.fetch_timeout_seconds),
+    )
+
+    report = StatusReport(
+        generated_at=_now_iso(),
+        project_name=profile.name,
+        project_root=str(profile.root),
+        fetch_requested=do_fetch,
+        repositories=snapshots,
+        warnings=warnings,
+    )
+
+    if json_out:
+        console.print_json(render_status_json(report))
+    else:
+        render_status_table(report, console)
+
+    # Phase 1 status is read-only reporting; a missing worktree is the only failure.
+    raise typer.Exit(EXIT_FAILURE if missing else EXIT_OK)
+
+
+@app.command()
+def init(
+    path: Path = typer.Argument(..., help="Workspace root to scan."),
+    name: Optional[str] = typer.Option(None, help="Profile name; defaults to the dir name."),
+    max_depth: int = typer.Option(4, help="Maximum discovery depth."),
+    remote: str = typer.Option("origin", help="Default remote name."),
+    include_linked: bool = typer.Option(
+        False, "--include-linked-worktrees", help="Include linked worktrees."
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip interactive selection; take all."),
+    activate: bool = typer.Option(True, help="Set this profile as the active project."),
+) -> None:
+    """Discover a workspace and write a profile. Performs no git mutation."""
+    root = path.expanduser().resolve()
+    if not root.is_dir():
+        raise _fail(f"workspace root is not a directory: {root}")
+
+    profile_name = name or root.name
+    if config.profile_path(profile_name).exists() and not yes:
+        if not Confirm.ask(
+            f"Profile '{profile_name}' exists. Overwrite?", default=False
+        ):
+            raise typer.Exit(EXIT_OK)
+
+    backend = GitBackend()
+    result = discover_worktrees(
+        root,
+        max_depth=max_depth,
+        exclude=DEFAULT_EXCLUDES,
+        backend=backend,
+        include_linked_worktrees=include_linked,
+    )
+
+    for w in result.warnings:
+        err_console.print(f"[yellow]![/yellow] {w}", highlight=False)
+
+    if not result.repositories:
+        raise _fail(f"no git repositories found under {root}", EXIT_FAILURE)
+
+    # Snapshot (no fetch) to record branch and inferred default per repo.
+    service = RepositoryService(backend=backend, jobs=8)
+    specs = [
+        RepoSpec(
+            name=("root" if r.relative_path == "." else Path(r.relative_path).name),
+            absolute_path=r.absolute_path,
+            relative_path=r.relative_path,
+            groups=[],
+            remote=remote,
+        )
+        for r in result.repositories
+    ]
+    snapshots = service.snapshot_all(specs, fetch=False)
+
+    chosen = _init_select(snapshots, interactive=not yes and sys.stdin.isatty())
+    if not chosen:
+        raise _fail("no repositories selected", EXIT_OK)
+
+    repositories = []
+    used_names: set[str] = set()
+    for snap in chosen:
+        base = snap.name
+        unique = base
+        n = 2
+        while unique in used_names:
+            unique = f"{base}-{n}"
+            n += 1
+        used_names.add(unique)
+        repositories.append(
+            RepositoryConfig(
+                path=snap.identity.relative_path,
+                name=unique,
+                groups=[],
+                default_branch=snap.checkout.default_branch,
+                remote=None,
+            )
+        )
+
+    profile = Profile(
+        name=profile_name,
+        root=root,
+        default_remote=remote,
+        discovery=DiscoveryConfig(
+            max_depth=max_depth,
+            exclude=list(DEFAULT_EXCLUDES),
+            include_linked_worktrees=include_linked,
+        ),
+        policy=PolicyConfig(),
+        repositories=repositories,
+    )
+
+    console.print(f"\n[bold]Profile preview:[/bold] {profile_name}")
+    _preview_profile(profile, snapshots)
+
+    if not yes and sys.stdin.isatty():
+        if not Confirm.ask("Save this profile?", default=True):
+            raise typer.Exit(EXIT_OK)
+
+    saved = config.save_profile(profile)
+    if activate:
+        config.set_active_project(profile_name)
+    console.print(f"[green]saved[/green] {saved}")
+
+
+def _init_select(snapshots, interactive: bool):
+    """Return the chosen snapshots. Non-interactive default takes all."""
+    if not interactive:
+        return list(snapshots)
+
+    table = Table(title="Discovered repositories", header_style="bold")
+    table.add_column("#")
+    table.add_column("Path")
+    table.add_column("Branch")
+    table.add_column("Default (source)")
+    for i, snap in enumerate(snapshots, 1):
+        default = snap.checkout.default_branch or "?"
+        src = snap.checkout.default_branch_inference_source.value
+        branch = snap.checkout.current_branch or "detached"
+        table.add_row(str(i), snap.identity.relative_path, branch, f"{default} ({src})")
+    console.print(table)
+
+    raw = typer.prompt(
+        "Select repositories (comma-separated numbers, or 'all')", default="all"
+    )
+    if raw.strip().lower() == "all":
+        return list(snapshots)
+    chosen = []
+    for tok in raw.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        try:
+            idx = int(tok)
+        except ValueError:
+            continue
+        if 1 <= idx <= len(snapshots):
+            chosen.append(snapshots[idx - 1])
+    return chosen
+
+
+def _preview_profile(profile: Profile, snapshots) -> None:
+    table = Table(header_style="bold")
+    table.add_column("Path")
+    table.add_column("Name")
+    table.add_column("Default branch (inference)")
+    by_path = {s.identity.relative_path: s for s in snapshots}
+    for r in profile.repositories:
+        snap = by_path.get(r.path)
+        src = (
+            snap.checkout.default_branch_inference_source.value if snap else "unknown"
+        )
+        table.add_row(r.path, r.name, f"{r.default_branch or '?'} ({src})")
+    console.print(table)
+
+
+@app.command()
+def profiles() -> None:
+    """List known profiles and mark the active one."""
+    active = config.load_active_project()
+    names = config.list_profiles()
+    if not names:
+        console.print("No profiles yet. Run `repo-manager init <path>`.")
+        raise typer.Exit(EXIT_OK)
+    for n in names:
+        mark = " [green](active)[/green]" if n == active else ""
+        console.print(f"- {n}{mark}")
+
+
+@app.command()
+def version() -> None:
+    """Print the version."""
+    console.print(__version__)
+
+
+def main() -> None:
+    app()
+
+
+if __name__ == "__main__":
+    main()
