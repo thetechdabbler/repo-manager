@@ -1,0 +1,182 @@
+"""The safety policy, as pure functions.
+
+Each `decide_*` maps a RepositorySnapshot (and, for checkout, the resolved target)
+to a Decision: proceed with a planned action, or skip with a reason and a next
+action. No git calls, no I/O, so the whole table is unit-testable against the
+fixture matrix.
+
+This mirrors the safety table in the architecture doc. The executor in
+operations.py turns a PROCEED into a concrete mutation and a terminal verdict.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from .models import Classification, InProgressOperation, RepositorySnapshot, Verdict
+
+
+@dataclass
+class Decision:
+    verdict: Verdict  # PROCEED or SKIPPED
+    planned: str = ""
+    reason: str = ""
+    next_action: str | None = None
+
+
+def _proceed(planned: str) -> Decision:
+    return Decision(verdict=Verdict.PROCEED, planned=planned)
+
+
+def _skip(reason: str, next_action: str) -> Decision:
+    return Decision(verdict=Verdict.SKIPPED, reason=reason, next_action=next_action)
+
+
+def _in_progress_skip(snap: RepositorySnapshot) -> Decision | None:
+    op = snap.worktree.in_progress_operation
+    if op is not InProgressOperation.NONE:
+        return _skip(
+            f"a {op.value} is in progress",
+            f"finish or abort the {op.value} (e.g. git {op.value} --abort)",
+        )
+    return None
+
+
+# -- update -------------------------------------------------------------------------
+#
+# Update fetches first, so the snapshot handed here already reflects current remote
+# state. It touches only the current branch and never switches.
+
+
+def decide_update(snap: RepositorySnapshot) -> Decision:
+    if (d := _in_progress_skip(snap)) is not None:
+        return d
+
+    cls = snap.classification
+    w = snap.worktree
+
+    if cls is Classification.DIRTY:
+        return _skip(
+            f"{w.total_changes} local change(s) would be at risk",
+            "commit or stash the changes, or use --stash-and-update (phase 3)",
+        )
+    if cls is Classification.DETACHED:
+        return _skip(
+            "HEAD is detached",
+            "check out a branch first (repo-manager checkout)",
+        )
+    if cls is Classification.NO_UPSTREAM:
+        return _skip(
+            "the current branch has no upstream",
+            "set an upstream with git branch --set-upstream-to",
+        )
+    if cls is Classification.AMBIGUOUS_REMOTE:
+        return _skip(
+            "several remotes exist and none is named 'origin'",
+            "set 'remote' for this repository in the profile",
+        )
+    if cls is Classification.REMOTE_UNAVAILABLE:
+        return _skip(
+            "the remote could not be reached",
+            "check network or credentials, then retry",
+        )
+    if cls is Classification.DIVERGED:
+        a = snap.remote.ahead_count or 0
+        b = snap.remote.behind_count or 0
+        return _skip(
+            f"local and upstream have diverged (↑{a} ↓{b})",
+            "reconcile manually with rebase or merge",
+        )
+    if cls is Classification.AHEAD:
+        return _skip(
+            "ahead of upstream; nothing to fast-forward",
+            "push your local commits when ready",
+        )
+    if cls is Classification.READY:
+        b = snap.remote.behind_count or 0
+        return _proceed(f"fast-forward {snap.checkout.upstream_branch} ({b} behind)")
+    if cls is Classification.CURRENT:
+        return _proceed("already up to date")
+
+    # DEFAULT_BRANCH_UNKNOWN reaches here only when clean and current, so update
+    # of the current branch is still a safe no-op.
+    return _proceed("already up to date")
+
+
+# -- switch-default -----------------------------------------------------------------
+#
+# Gates on worktree/HEAD/default-known/remote-availability only. Whether the default
+# branch itself can fast-forward is resolved by the executor after switching, since
+# the snapshot describes the *current* branch, not the default.
+
+
+def decide_switch_default(snap: RepositorySnapshot) -> Decision:
+    if (d := _in_progress_skip(snap)) is not None:
+        return d
+
+    cls = snap.classification
+    default = snap.checkout.default_branch
+
+    if default is None or cls is Classification.DEFAULT_BRANCH_UNKNOWN:
+        return _skip(
+            "the default branch could not be determined",
+            "set default_branch for this repository in the profile",
+        )
+    if cls is Classification.DIRTY:
+        return _skip(
+            f"{snap.worktree.total_changes} local change(s) block a branch switch",
+            "commit or stash the changes first",
+        )
+    if cls is Classification.DETACHED:
+        return _skip(
+            "HEAD is detached; a switch could orphan the checked-out commit",
+            f"check out {default} explicitly if that is intended",
+        )
+    if cls is Classification.AMBIGUOUS_REMOTE:
+        return _skip(
+            "several remotes exist and none is named 'origin'",
+            "set 'remote' for this repository in the profile",
+        )
+    if cls is Classification.REMOTE_UNAVAILABLE:
+        return _skip(
+            "the remote could not be reached, so the default cannot be brought current",
+            "check network or credentials, then retry",
+        )
+
+    already = snap.checkout.current_branch == default
+    if already:
+        return _proceed(f"already on {default}; fast-forward if behind")
+    return _proceed(f"switch to {default} and fast-forward")
+
+
+# -- checkout -----------------------------------------------------------------------
+#
+# Permissive by design: it only pre-skips an in-progress operation and a target that
+# exists nowhere. Overwrite risk from a dirty tree is left to git, which refuses the
+# switch; the executor reports that refusal as a failure with git's own message.
+
+
+def decide_checkout(
+    snap: RepositorySnapshot,
+    target: str | None,
+    exists_local: bool,
+    exists_remote: bool,
+) -> Decision:
+    if (d := _in_progress_skip(snap)) is not None:
+        return d
+
+    if target is None:
+        return _skip(
+            "the default branch could not be determined",
+            "set default_branch in the profile, or name a branch explicitly",
+        )
+    if snap.checkout.current_branch == target and exists_local:
+        return _proceed(f"already on {target}")
+    if not exists_local and not exists_remote:
+        return _skip(
+            f"branch '{target}' exists neither locally nor on the remote",
+            "check the branch name, or fetch first",
+        )
+    if exists_local:
+        return _proceed(f"switch to local branch {target}")
+    return _proceed(f"create tracking branch {target} from the remote")

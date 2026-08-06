@@ -233,6 +233,112 @@ class RepositorySnapshot:
         }
 
 
+class Operation(str, Enum):
+    UPDATE = "update"
+    SWITCH_DEFAULT = "switch-default"
+    CHECKOUT = "checkout"
+
+
+class Verdict(str, Enum):
+    """Outcome of one repository within an operation.
+
+    PROCEED is the pre-execution verdict from the policy engine; the executor then
+    resolves it to one of the terminal outcomes.
+    """
+
+    PROCEED = "proceed"
+    SKIPPED = "skipped"
+    UPDATED = "updated"
+    NOOP = "noop"
+    FAILED = "failed"
+
+
+@dataclass
+class OperationResult:
+    """What happened to one repository during one operation."""
+
+    name: str
+    relative_path: str
+    operation: Operation
+    verdict: Verdict
+    planned: str = ""
+    reason: str = ""
+    next_action: str | None = None
+    before_branch: str | None = None
+    before_head: str | None = None
+    after_branch: str | None = None
+    after_head: str | None = None
+    commands: list[str] = field(default_factory=list)
+    error: str | None = None
+
+    @property
+    def changed(self) -> bool:
+        return self.before_head != self.after_head or (
+            self.before_branch != self.after_branch
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "relative_path": self.relative_path,
+            "operation": _enum_value(self.operation),
+            "verdict": _enum_value(self.verdict),
+            "planned": self.planned,
+            "reason": self.reason,
+            "next_action": self.next_action,
+            "before": {"branch": self.before_branch, "head": self.before_head},
+            "after": {"branch": self.after_branch, "head": self.after_head},
+            "changed": self.changed,
+            "commands": list(self.commands),
+            "error": self.error,
+        }
+
+
+@dataclass
+class OperationReport:
+    """The complete result of one mutation command."""
+
+    generated_at: str
+    project_name: str
+    project_root: str
+    operation: Operation
+    dry_run: bool
+    ignore_skips: bool = False
+    results: list[OperationResult] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    schema_version: int = SCHEMA_VERSION
+
+    def exit_code(self) -> int:
+        """Highest-severity applicable code: failure (1) beats skip (3) beats ok."""
+        has_failure = any(r.verdict is Verdict.FAILED for r in self.results)
+        has_skip = any(r.verdict is Verdict.SKIPPED for r in self.results)
+        if has_failure:
+            return 1
+        if has_skip and not self.ignore_skips:
+            return 3
+        return 0
+
+    def totals(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for r in self.results:
+            key = _enum_value(r.verdict)
+            counts[key] = counts.get(key, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "project": {"name": self.project_name, "root": self.project_root},
+            "operation": _enum_value(self.operation),
+            "dry_run": self.dry_run,
+            "exit_code": self.exit_code(),
+            "totals": self.totals(),
+            "results": [r.to_dict() for r in self.results],
+            "warnings": list(self.warnings),
+        }
+
+
 @dataclass
 class StatusReport:
     """The complete result of one `status` invocation."""

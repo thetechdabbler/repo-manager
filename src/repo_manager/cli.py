@@ -27,8 +27,14 @@ from .config import (
 )
 from .discovery import DEFAULT_EXCLUDES, discover_worktrees
 from .git_backend import GitBackend
-from .models import StatusReport
-from .output import render_status_json, render_status_table
+from .models import Operation, StatusReport
+from .operations import OperationCoordinator
+from .output import (
+    render_operation_json,
+    render_plan_table,
+    render_status_json,
+    render_status_table,
+)
 from .repository_service import RepoSpec, RepositoryService
 
 app = typer.Typer(
@@ -111,6 +117,46 @@ def _specs(profile: Profile, selected: list[RepositoryConfig]) -> list[RepoSpec]
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+# -- selection expressions ----------------------------------------------------------
+#
+# A comma-separated union of tokens, matched against each snapshot:
+#   all | clean | <classification> | group:NAME | search:TEXT | name:NAME | <bare>
+
+
+def _token_matches(snap, token: str) -> bool:
+    token = token.strip()
+    if not token:
+        return False
+    low = token.lower()
+    if low == "all":
+        return True
+    if low == "clean":
+        return (
+            not snap.worktree.is_dirty
+            and snap.worktree.in_progress_operation.value == "none"
+        )
+    if low == snap.classification.value:
+        return True
+    if ":" in token:
+        kind, _, value = token.partition(":")
+        kind = kind.lower()
+        if kind == "group":
+            return value in snap.identity.groups
+        if kind == "search":
+            hay = f"{snap.name} {snap.identity.relative_path}".lower()
+            return value.lower() in hay
+        if kind == "name":
+            return snap.name == value
+        return False
+    return snap.name == token or snap.identity.relative_path == token
+
+
+def selection_matches(snap, expr: str | None) -> bool:
+    if not expr:
+        return True
+    return any(_token_matches(snap, tok) for tok in expr.split(","))
 
 
 # -- commands ------------------------------------------------------------------------
@@ -317,6 +363,187 @@ def _preview_profile(profile: Profile, snapshots) -> None:
     console.print(table)
 
 
+def _run_mutation(
+    operation: Operation,
+    project: Optional[str],
+    group: Optional[str],
+    repo: Optional[str],
+    select: Optional[str],
+    dry_run: bool,
+    yes: bool,
+    ignore_skips: bool,
+    jobs: Optional[int],
+    json_out: bool,
+    checkout_branch: Optional[str] = None,
+) -> None:
+    profile = _resolve_profile(project)
+    selected = _select(profile, group, repo)
+    specs = _specs(profile, selected)
+
+    missing = [s for s in specs if not (s.absolute_path / ".git").exists()]
+    live = [s for s in specs if s not in missing]
+    if not live:
+        raise _fail("no repositories to operate on", EXIT_USAGE)
+
+    worker_count = jobs or profile.policy.jobs
+    coordinator = OperationCoordinator(backend=GitBackend(), jobs=worker_count)
+    plan = coordinator.build_plan(
+        live,
+        operation,
+        fetch_timeout=float(profile.policy.fetch_timeout_seconds),
+        checkout_branch=checkout_branch,
+    )
+
+    if select:
+        plan = [item for item in plan if selection_matches(item.snapshot, select)]
+        if not plan:
+            raise _fail(f"no repositories matched selection '{select}'", EXIT_USAGE)
+
+    # Confirmation before any change. Dry-run never asks.
+    would_change = [i for i in plan if i.decision.verdict.value == "proceed"]
+    if not dry_run and would_change:
+        if not yes:
+            if not sys.stdin.isatty():
+                raise _fail(
+                    "refusing to mutate non-interactively without --yes "
+                    "(or use --dry-run to preview)",
+                    EXIT_USAGE,
+                )
+            _preview_plan(coordinator, plan, operation, profile)
+            if not Confirm.ask(
+                f"Proceed with {len(would_change)} repository operation(s)?",
+                default=False,
+            ):
+                raise typer.Exit(EXIT_OK)
+
+    report = coordinator.execute(
+        plan,
+        operation,
+        project_name=profile.name,
+        project_root=str(profile.root),
+        dry_run=dry_run,
+        ignore_skips=ignore_skips,
+    )
+    for s in missing:
+        report.warnings.append(f"{s.relative_path}: not a git worktree on disk")
+
+    if json_out:
+        console.print_json(render_operation_json(report))
+    else:
+        render_plan_table(report, console)
+        for w in report.warnings:
+            err_console.print(f"[yellow]![/yellow] {w}", highlight=False)
+
+    raise typer.Exit(EXIT_FAILURE if missing else report.exit_code())
+
+
+def _preview_plan(coordinator, plan, operation, profile) -> None:
+    from .models import OperationReport
+
+    preview = OperationReport(
+        generated_at=_now_iso(),
+        project_name=profile.name,
+        project_root=str(profile.root),
+        operation=operation,
+        dry_run=True,
+        results=[
+            coordinator._execute_one(item, operation, dry_run=True) for item in plan
+        ],
+    )
+    render_plan_table(preview, console)
+
+
+@app.command()
+def update(
+    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    select: Optional[str] = typer.Option(
+        None, help="Selection expression, e.g. 'ready', 'dirty', 'group:libraries'."
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview; make no changes."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
+    ignore_skips: bool = typer.Option(
+        False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
+    ),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Fast-forward the current branch of eligible repositories. Never switches branches."""
+    _run_mutation(
+        Operation.UPDATE, project, group, repo, select, dry_run, yes, ignore_skips,
+        jobs, json_out,
+    )
+
+
+@app.command(name="switch-default")
+def switch_default(
+    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    select: Optional[str] = typer.Option(None, help="Selection expression."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview; make no changes."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
+    ignore_skips: bool = typer.Option(
+        False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
+    ),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Switch each eligible repository to its default branch and fast-forward it."""
+    _run_mutation(
+        Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
+        ignore_skips, jobs, json_out,
+    )
+
+
+@app.command(name="sync", hidden=True)
+def sync(
+    project: Optional[str] = typer.Option(None),
+    group: Optional[str] = typer.Option(None),
+    repo: Optional[str] = typer.Option(None),
+    select: Optional[str] = typer.Option(None),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    yes: bool = typer.Option(False, "--yes", "-y"),
+    ignore_skips: bool = typer.Option(False, "--ignore-skips"),
+    jobs: Optional[int] = typer.Option(None),
+    json_out: bool = typer.Option(False, "--json"),
+) -> None:
+    """Deprecated alias for switch-default."""
+    err_console.print(
+        "[yellow]note:[/yellow] 'sync' is deprecated; use 'switch-default'.",
+        highlight=False,
+    )
+    _run_mutation(
+        Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
+        ignore_skips, jobs, json_out,
+    )
+
+
+@app.command()
+def checkout(
+    branch: str = typer.Option(
+        ..., "--branch", help="Branch to check out, or 'default' for each repo's default."
+    ),
+    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    select: Optional[str] = typer.Option(None, help="Selection expression."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview; make no changes."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
+    ignore_skips: bool = typer.Option(
+        False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
+    ),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Check out a branch across selected repositories, creating tracking branches as needed."""
+    _run_mutation(
+        Operation.CHECKOUT, project, group, repo, select, dry_run, yes, ignore_skips,
+        jobs, json_out, checkout_branch=branch,
+    )
+
+
 @app.command()
 def profiles() -> None:
     """List known profiles and mark the active one."""
@@ -342,23 +569,31 @@ _MANUAL = """\
 [bold]Getting started[/bold]
   repo-manager init <path> [--name N] [--yes]   Scan a workspace, write a profile
   repo-manager status [--fetch]                 Show state of every repo
+  repo-manager update --dry-run                 Preview a safe fast-forward update
   repo-manager profiles                         List profiles, mark the active one
 
 [bold]Commands[/bold]
-  init      Discover repositories and save a profile. Performs no git mutation.
-  status    Report each repository's state. Read-only unless --fetch is passed.
-  profiles  List known profiles.
-  version   Print the version.
-  help      Show this manual.
+  init            Discover repositories and save a profile. No git mutation.
+  status          Report each repository's state. Read-only unless --fetch.
+  update          Fast-forward the current branch of eligible repos. Never switches.
+  switch-default  Switch each eligible repo to its default branch and fast-forward.
+  checkout        Check out a branch across repos, creating tracking branches as needed.
+  profiles        List known profiles.
+  version         Print the version.
+  help            Show this manual.
 
 [bold]Common options[/bold]
-  --project N   Use profile N instead of the active one.
-  --group G     Limit to repositories tagged with group G.
-  --repo R      Limit to a single repository (by name or path).
-  --fetch       Fetch from the remote before computing ahead/behind (status).
-  --json        Emit machine-readable JSON instead of a table.
-  --jobs N      Parallel workers for reads and fetches (default 8).
-  --yes / -y    Non-interactive; take all discovered repos (init).
+  --project N     Use profile N instead of the active one.
+  --group G       Limit to repositories tagged with group G.
+  --repo R        Limit to a single repository (by name or path).
+  --select EXPR   Filter by expression: all, clean, dirty, ready, ahead,
+                  group:NAME, search:TEXT, name:NAME (comma-separated union).
+  --fetch         Fetch before computing ahead/behind (status only).
+  --dry-run       Preview a mutation; make no changes.
+  --yes / -y      Skip the confirmation prompt (required non-interactively).
+  --ignore-skips  Exit 0 even when repositories are safety-skipped.
+  --json          Emit machine-readable JSON instead of a table.
+  --jobs N        Parallel workers for reads and fetches (default 8).
 
 [bold]Repository states[/bold]
   ready                 Clean, tracking, behind. The only default-updatable state.
@@ -388,8 +623,10 @@ possibly-stale numbers. Stale remote refs are never presented as current state.[
 [bold]Examples[/bold]
   repo-manager init ~/work/services --name services --yes
   repo-manager status --fetch
-  repo-manager status --group backend --json
-  repo-manager status --repo api --fetch
+  repo-manager update --dry-run
+  repo-manager update --group backend --yes
+  repo-manager switch-default --select clean --dry-run
+  repo-manager checkout --branch default --repo api
 
 Run [bold]repo-manager <command> --help[/bold] for the full option list of any command.
 """

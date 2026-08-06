@@ -133,3 +133,65 @@ def _print_warnings(report: StatusReport, console: Console) -> None:
 
 def eprint(message: str) -> None:
     print(message, file=sys.stderr)
+
+
+# -- operation rendering ------------------------------------------------------------
+
+from .models import OperationReport, Verdict  # noqa: E402
+
+_VERDICT_STYLE = {
+    Verdict.PROCEED: "green",
+    Verdict.UPDATED: "bold green",
+    Verdict.NOOP: "dim",
+    Verdict.SKIPPED: "yellow",
+    Verdict.FAILED: "bold red",
+}
+
+
+def render_operation_json(report: OperationReport) -> str:
+    return json.dumps(report.to_dict(), indent=2)
+
+
+def render_plan_table(report: OperationReport, console: Console | None = None) -> None:
+    """The pre-mutation plan: what each repository will do, and why the skips skip."""
+    console = console or Console()
+    verb = "Plan" if report.dry_run else "Result"
+    title = f"repo-manager · {report.operation.value} · {report.project_name}"
+    if report.dry_run:
+        title += "  (dry run — no changes made)"
+
+    table = Table(title=title, title_style="bold", header_style="bold")
+    table.add_column("Repository", overflow="fold")
+    table.add_column("Branch")
+    table.add_column(verb)
+    table.add_column("Detail", overflow="fold")
+
+    for r in report.results:
+        verdict = r.verdict
+        vtext = Text(verdict.value, style=_VERDICT_STYLE.get(verdict, ""))
+        branch = r.after_branch or r.before_branch or "?"
+        detail = r.planned if verdict in (Verdict.PROCEED, Verdict.UPDATED, Verdict.NOOP) else r.reason
+        if r.error:
+            detail = r.error
+        table.add_row(r.relative_path, branch, vtext, detail)
+
+    console.print(table)
+
+    parts = [f"{c} {n}" for n, c in report.totals().items()]
+    if parts:
+        console.print(Text("  ".join(parts), style="dim"))
+
+    # Skip guidance: reason + next action, the design's whole point.
+    skips = [r for r in report.results if r.verdict is Verdict.SKIPPED]
+    failures = [r for r in report.results if r.verdict is Verdict.FAILED]
+    for r in skips + failures:
+        console.print()
+        label = "SKIPPED" if r.verdict is Verdict.SKIPPED else "FAILED"
+        style = "yellow" if r.verdict is Verdict.SKIPPED else "red"
+        console.print(Text(f"{label}  {r.relative_path}", style=style), highlight=False)
+        if r.reason:
+            console.print(f"  Reason: {r.reason}", highlight=False)
+        if r.error:
+            console.print(f"  Error:  {r.error}", highlight=False)
+        if r.next_action:
+            console.print(f"  Next:   {r.next_action}", highlight=False)

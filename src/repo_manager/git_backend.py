@@ -282,6 +282,12 @@ class GitBackend:
             return None
         return (parts[0], parts[1], parts[2], parts[3], parts[4])
 
+    def branch_exists_local(self, repo: Path, branch: str) -> bool:
+        return self.ref_exists(repo, f"refs/heads/{branch}")
+
+    def branch_exists_remote(self, repo: Path, remote: str, branch: str) -> bool:
+        return self.ref_exists(repo, f"refs/remotes/{remote}/{branch}")
+
     # -- network ------------------------------------------------------------------
 
     def fetch(
@@ -292,3 +298,23 @@ class GitBackend:
             args.append("--prune")
         args.append(remote)
         return self.run(repo, *args, timeout=timeout, network=True)
+
+    # -- local mutations ----------------------------------------------------------
+    #
+    # These never touch the network. Update/switch-default fetch first (in
+    # parallel), then fast-forward locally against the already-updated ref, so a
+    # mutation can never block on a remote.
+
+    def merge_ff_only(self, repo: Path, ref: str) -> GitResult:
+        """Fast-forward the current branch to `ref`. Fails if not a fast-forward."""
+        return self.run(repo, "merge", "--ff-only", ref)
+
+    def switch(self, repo: Path, branch: str) -> GitResult:
+        """Check out an existing local branch. Git refuses on overwrite risk."""
+        return self.run(repo, "switch", branch)
+
+    def switch_create_tracking(
+        self, repo: Path, branch: str, start_point: str
+    ) -> GitResult:
+        """Create `branch` tracking `start_point` (e.g. origin/dev) and switch to it."""
+        return self.run(repo, "switch", "-c", branch, "--track", start_point)

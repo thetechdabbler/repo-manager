@@ -128,6 +128,117 @@ def test_profiles_command_lists_and_marks_active(home, workspace):
     assert "active" in result.stdout
 
 
+def _init(workspace, name="fixture"):
+    return runner.invoke(app, ["init", str(workspace), "--name", name, "--yes"])
+
+
+@pytest.fixture
+def mutws(builder):
+    """A workspace with the states the mutation commands exercise."""
+    builder.build_clean_current()
+    builder.build_clean_behind()
+    builder.build_dirty()
+    builder.build_ahead()
+    return builder
+
+
+def test_update_dry_run_changes_nothing(home, mutws):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+
+    behind = mutws.workspace / "clean-behind"
+    before = GitBackend().head_sha(behind)
+    result = runner.invoke(app, ["update", "--dry-run", "--json"])
+    # clean-behind would proceed, but dirty/ahead repos are skipped -> exit 3.
+    assert result.exit_code == 3, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["dry_run"] is True
+    assert GitBackend().head_sha(behind) == before
+
+
+def test_update_requires_yes_non_interactively(home, mutws):
+    _init(mutws.workspace)
+    # No TTY in the test runner and no --yes: must refuse to mutate.
+    result = runner.invoke(app, ["update", "--repo", "clean-behind"])
+    assert result.exit_code == 2
+    assert "--yes" in result.stderr
+
+
+def test_update_yes_fast_forwards(home, mutws):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+
+    behind = mutws.workspace / "clean-behind"
+    before = GitBackend().head_sha(behind)
+    result = runner.invoke(app, ["update", "--repo", "clean-behind", "--yes", "--json"])
+    assert result.exit_code == 0, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["results"][0]["verdict"] == "updated"
+    assert GitBackend().head_sha(behind) != before
+
+
+def test_update_dirty_repo_skips_with_exit_3(home, mutws):
+    _init(mutws.workspace)
+    result = runner.invoke(app, ["update", "--repo", "dirty", "--yes", "--json"])
+    assert result.exit_code == 3
+    data = json.loads(result.stdout)
+    assert data["results"][0]["verdict"] == "skipped"
+    assert data["results"][0]["next_action"]
+
+
+def test_update_ignore_skips_exits_zero(home, mutws):
+    _init(mutws.workspace)
+    result = runner.invoke(
+        app, ["update", "--repo", "dirty", "--yes", "--ignore-skips", "--json"]
+    )
+    assert result.exit_code == 0
+
+
+def test_select_expression_filters(home, mutws):
+    _init(mutws.workspace)
+    result = runner.invoke(app, ["update", "--select", "ready", "--dry-run", "--json"])
+    assert result.exit_code == 0, result.stderr  # only 'ready' repos, all proceed
+    data = json.loads(result.stdout)
+    assert all(r["verdict"] == "proceed" for r in data["results"])
+    assert len(data["results"]) >= 1
+
+
+def test_switch_default_returns_to_main(home, mutws):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+    from conftest import git as raw_git
+
+    behind = mutws.workspace / "clean-behind"
+    raw_git(behind, "switch", "-q", "-c", "feature/z")
+    result = runner.invoke(
+        app, ["switch-default", "--repo", "clean-behind", "--yes", "--json"]
+    )
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().current_branch(behind) == "main"
+
+
+def test_sync_alias_warns_and_works(home, mutws):
+    _init(mutws.workspace)
+    result = runner.invoke(app, ["sync", "--repo", "clean-current", "--yes", "--json"])
+    assert result.exit_code == 0
+    assert "deprecated" in result.stderr.lower()
+
+
+def test_checkout_default_across_repos(home, mutws):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+    from conftest import git as raw_git
+
+    cur = mutws.workspace / "clean-current"
+    raw_git(cur, "switch", "-q", "-c", "feature/q")
+    result = runner.invoke(
+        app,
+        ["checkout", "--branch", "default", "--repo", "clean-current", "--yes", "--json"],
+    )
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().current_branch(cur) == "main"
+
+
 def test_status_fetch_flags_unreachable(home, tmp_path, builder):
     """A repo with a broken remote reports remote-unavailable under --fetch."""
     repo = builder.build_unreachable_remote()
