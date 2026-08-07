@@ -355,3 +355,22 @@ class GitBackend:
 
     def stash_drop(self, repo: Path, ref: str) -> GitResult:
         return self.run(repo, "stash", "drop", ref)
+
+    # -- history ------------------------------------------------------------------
+
+    # Field separator inside a commit header line; never appears in git output.
+    LOG_FS = "\x1f"
+
+    def log_since(self, repo: Path, since: str, first_parent: bool = True) -> GitResult:
+        """Log commits with committer date >= `since`, with per-commit numstat.
+
+        Selection is by committer date (git's --since default) on the current branch
+        (HEAD). Each commit is one header line beginning with LOG_FS, followed by its
+        numstat lines. Read-only.
+        """
+        fs = self.LOG_FS
+        fmt = f"--format={fs}%H{fs}%an{fs}%cI{fs}%s"
+        args = ["log", f"--since={since}", "--date=iso-strict", "--numstat", fmt]
+        if first_parent:
+            args.insert(1, "--first-parent")
+        return self.run(repo, *args)
