@@ -1,8 +1,8 @@
 site_name: repo-manager
 site_description: Work safely with a directory tree of many independent Git repositories
-site_url: https://example.github.io/repo-manager/
-repo_url: https://github.com/example/repo-manager
-repo_name: repo-manager
+site_url: https://thetechdabbler.github.io/repo-manager/
+repo_url: https://github.com/thetechdabbler/repo-manager
+repo_name: thetechdabbler/repo-manager
 edit_uri: edit/main/docs/
 
 theme:

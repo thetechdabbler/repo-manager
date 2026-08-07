@@ -14,6 +14,12 @@ dependencies = [
     "tomlkit>=0.13",
 ]
 
+[project.urls]
+Homepage = "https://github.com/thetechdabbler/repo-manager"
+Repository = "https://github.com/thetechdabbler/repo-manager"
+Documentation = "https://thetechdabbler.github.io/repo-manager/"
+Issues = "https://github.com/thetechdabbler/repo-manager/issues"
+
 [project.scripts]
 repo-manager = "repo_manager.cli:main"
 
