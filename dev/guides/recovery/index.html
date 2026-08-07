@@ -435,6 +435,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recovering local work
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -451,6 +469,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-restore-is-clean" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the restore is clean
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-restore-conflicts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the restore conflicts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-never-stashed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is never stashed
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -742,27 +812,43 @@
 
 
 <h1 id="recovering-local-work">Recovering local work<a class="headerlink" href="#recovering-local-work" title="Permanent link">&para;</a></h1>
-<div class="admonition note">
-<p class="admonition-title">Planned for the next release</p>
-<p><code>--stash-and-update</code> is designed and specified but not yet shipped. This page
-describes the intended behavior; it will be marked stable when the feature lands.</p>
-</div>
 <p>By default, a dirty repository is skipped by <code>update</code> and <code>switch-default</code> so your
 local work is never touched. When you do want to update on top of local changes,
 <code>--stash-and-update</code> is the opt-in, conflict-safe path.</p>
 <div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>update<span class="w"> </span>--stash-and-update<span class="w"> </span>--group<span class="w"> </span>backend
+repo-manager<span class="w"> </span>switch-default<span class="w"> </span>--stash-and-update<span class="w"> </span>--repo<span class="w"> </span>api
 </code></pre></div>
-<p>For each dirty repository it will:</p>
+<p>For each dirty repository that is otherwise fast-forwardable, it:</p>
 <ol>
-<li>Create a uniquely named stash, including untracked files.</li>
-<li>Fast-forward using the normal safe path.</li>
-<li>Restore the stash.</li>
-<li>Report whether the restore was clean, conflicted, or failed.</li>
+<li>Creates a uniquely named stash, including untracked files.</li>
+<li>Fast-forwards using the normal safe path (<code>switch-default</code> also switches branch first).</li>
+<li>Restores the stash.</li>
+<li>Reports whether the restore was clean or conflicted.</li>
 </ol>
-<p>The stash is never dropped when a restore conflicts. The stash reference and the exact
-git commands to inspect or recover it are printed, so no work is ever lost silently.</p>
-<p>An <code>in-progress</code> repository (mid rebase, merge, cherry-pick, revert, or bisect) is
-never touched, even with this flag.</p>
+<h2 id="when-the-restore-is-clean">When the restore is clean<a class="headerlink" href="#when-the-restore-is-clean" title="Permanent link">&para;</a></h2>
+<p>The stash is applied and dropped, the repository shows as <code>updated</code>, and your local
+changes sit on top of the freshly fast-forwarded branch. Nothing more to do.</p>
+<h2 id="when-the-restore-conflicts">When the restore conflicts<a class="headerlink" href="#when-the-restore-conflicts" title="Permanent link">&para;</a></h2>
+<p>The stash is <strong>never dropped</strong> on a conflict. The repository is reported as <code>failed</code>,
+and the result carries the exact recovery commands:</p>
+<div class="highlight"><pre><span></span><code>FAILED  services/payments-api
+Error:  the operation succeeded but restoring your local changes conflicted
+Next:   your changes are safe in a stash. Inspect with
+        `git -C &lt;path&gt; stash list` (entry: &#39;repo-manager auto-stash: ...&#39;);
+        re-apply after resolving with `git -C &lt;path&gt; stash pop stash@{0}`
+</code></pre></div>
+<p>The fast-forward still happened; your uncommitted work is preserved in the named stash
+and can be recovered at any time. In <code>--json</code> output the same information is available
+under each result's <code>stash</code> object (<code>stashed</code>, <code>reference</code>, <code>restore</code>).</p>
+<h2 id="what-is-never-stashed">What is never stashed<a class="headerlink" href="#what-is-never-stashed" title="Permanent link">&para;</a></h2>
+<p>Stashing only applies to a <code>dirty</code> repository whose branch can fast-forward. Anything
+that stashing cannot make updatable is still skipped with a reason:</p>
+<ul>
+<li>A repository mid rebase, merge, cherry-pick, revert, or bisect (<code>in-progress</code>) is
+  never touched, even with this flag.</li>
+<li>A <code>diverged</code> or <code>ahead</code> branch, where a fast-forward is impossible regardless of the
+  working tree.</li>
+</ul>
 
 
 
