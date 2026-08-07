@@ -8,6 +8,7 @@ network. The result is an OperationReport, which is what the renderers consume.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,6 +52,7 @@ class OperationCoordinator:
         operation: Operation,
         fetch_timeout: float = 30.0,
         checkout_branch: str | None = None,
+        stash: bool = False,
     ) -> list[PlanItem]:
         """Fetch + snapshot in parallel, then decide per repo. Read-only."""
         # All three operations need current remote state to decide safely.
@@ -63,10 +65,10 @@ class OperationCoordinator:
         for spec in specs:
             snap = by_path[spec.relative_path]
             if operation is Operation.UPDATE:
-                decision = policy.decide_update(snap)
+                decision = policy.decide_update(snap, stash=stash)
                 target = None
             elif operation is Operation.SWITCH_DEFAULT:
-                decision = policy.decide_switch_default(snap)
+                decision = policy.decide_switch_default(snap, stash=stash)
                 target = snap.checkout.default_branch
             else:  # CHECKOUT
                 target = self._resolve_checkout_target(snap, checkout_branch)
@@ -144,7 +146,9 @@ class OperationCoordinator:
             # PROCEED verdict is preserved: "would proceed".
             return result
 
-        if operation is Operation.UPDATE:
+        if dec.via_stash:
+            self._do_stash_operation(item, operation, result)
+        elif operation is Operation.UPDATE:
             self._do_update(item, result)
         elif operation is Operation.SWITCH_DEFAULT:
             self._do_switch_default(item, result)
@@ -155,6 +159,79 @@ class OperationCoordinator:
         if result.verdict is Verdict.PROCEED:
             result.verdict = Verdict.UPDATED if result.changed else Verdict.NOOP
         return result
+
+    # -- stash flow ---------------------------------------------------------------
+
+    _stash_counter = 0
+
+    def _next_stash_token(self) -> str:
+        # Unique per process run; avoids clashing with any pre-existing stashes.
+        OperationCoordinator._stash_counter += 1
+        return f"{os.getpid()}-{OperationCoordinator._stash_counter}"
+
+    def _do_stash_operation(
+        self, item: PlanItem, operation: Operation, result: OperationResult
+    ) -> None:
+        """Stash local work, run the core mutation, then restore.
+
+        The stash is created with a unique, findable message. On a conflicting
+        restore the stash is retained and recovery instructions are attached, so no
+        local work is ever lost.
+        """
+        repo = item.spec.absolute_path
+        rel = item.snapshot.identity.relative_path
+        message = f"repo-manager auto-stash: {rel} #{self._next_stash_token()}"
+
+        push = self.backend.stash_push(repo, message)
+        result.commands.append("stash push --include-untracked")
+        if not push.ok:
+            result.verdict = Verdict.FAILED
+            result.error = push.stderr.strip() or "could not create stash"
+            return
+        result.stashed = True
+        ref = self.backend.stash_find(repo, message) or "stash@{0}"
+        result.stash_reference = ref
+
+        # Run the core mutation. These set verdict FAILED on failure.
+        if operation is Operation.UPDATE:
+            self._do_update(item, result)
+        else:
+            self._do_switch_default(item, result)
+
+        core_failed = result.verdict is Verdict.FAILED
+
+        # Always attempt to return the worktree to the user, whatever happened.
+        restore = self._restore_stash(repo, ref, result)
+
+        if restore != "clean":
+            recovery = (
+                f"your changes are safe in a stash. Inspect with "
+                f"`git -C {repo} stash list` (entry: '{message}'); re-apply after "
+                f"resolving with `git -C {repo} stash pop {ref}`"
+            )
+            if core_failed:
+                # The mutation itself failed; keep its error, note the stash too.
+                result.next_action = recovery
+            else:
+                result.verdict = Verdict.FAILED
+                result.error = (
+                    "the operation succeeded but restoring your local changes "
+                    "conflicted"
+                )
+                result.next_action = recovery
+
+    def _restore_stash(self, repo: Path, ref: str, result: OperationResult) -> str:
+        """Apply then drop the stash. On conflict the stash is left in place."""
+        apply = self.backend.stash_apply(repo, ref)
+        result.commands.append(f"stash apply {ref}")
+        if apply.ok:
+            self.backend.stash_drop(repo, ref)
+            result.commands.append(f"stash drop {ref}")
+            result.restore = "clean"
+            return "clean"
+        text = f"{apply.stdout}\n{apply.stderr}".lower()
+        result.restore = "conflict" if "conflict" in text else "error"
+        return result.restore
 
     # -- per-operation executors --------------------------------------------------
 

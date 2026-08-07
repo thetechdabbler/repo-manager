@@ -318,3 +318,40 @@ class GitBackend:
     ) -> GitResult:
         """Create `branch` tracking `start_point` (e.g. origin/dev) and switch to it."""
         return self.run(repo, "switch", "-c", branch, "--track", start_point)
+
+    # -- stash --------------------------------------------------------------------
+    #
+    # Restore uses apply-then-drop rather than pop, so a conflicting restore never
+    # drops the stash: the user's work is always still recoverable.
+
+    def stash_push(self, repo: Path, message: str) -> GitResult:
+        """Stash all local changes including untracked files under `message`."""
+        return self.run(
+            repo, "stash", "push", "--include-untracked", "-m", message
+        )
+
+    def stash_list(self, repo: Path) -> list[tuple[str, str]]:
+        """Return (ref, subject) pairs, newest first, e.g. ('stash@{0}', 'On main: ...')."""
+        res = self.run(repo, "stash", "list", "--format=%gd%x09%gs")
+        out: list[tuple[str, str]] = []
+        if not res.ok:
+            return out
+        for line in res.stdout.splitlines():
+            if "\t" in line:
+                ref, subject = line.split("\t", 1)
+                out.append((ref.strip(), subject))
+        return out
+
+    def stash_find(self, repo: Path, message: str) -> str | None:
+        """Find the stash ref whose subject contains `message`."""
+        for ref, subject in self.stash_list(repo):
+            if message in subject:
+                return ref
+        return None
+
+    def stash_apply(self, repo: Path, ref: str) -> GitResult:
+        """Reapply a stash without dropping it. Non-zero on conflict."""
+        return self.run(repo, "stash", "apply", ref)
+
+    def stash_drop(self, repo: Path, ref: str) -> GitResult:
+        return self.run(repo, "stash", "drop", ref)

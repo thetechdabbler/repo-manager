@@ -85,6 +85,26 @@ def test_checkout_permissive_but_skips_missing_branch(matrix_snapshots):
     )
 
 
+def test_stash_makes_dirty_ff_eligible(matrix_snapshots):
+    """Under --stash-and-update, a dirty-but-behind repo becomes proceed-via-stash."""
+    for name in ("dirty", "stash-ok", "stash-conflict"):
+        snap = matrix_snapshots[name]
+        # Without stash: skipped.
+        assert policy.decide_update(snap).verdict is Verdict.SKIPPED
+        # With stash: proceed, and flagged to run the stash lifecycle.
+        d = policy.decide_update(snap, stash=True)
+        assert d.verdict is Verdict.PROCEED
+        assert d.via_stash is True
+
+
+def test_stash_does_not_rescue_in_progress(matrix_snapshots):
+    """--stash-and-update must never touch a repo mid-operation."""
+    snap = matrix_snapshots["rebase-in-progress"]
+    d = policy.decide_update(snap, stash=True)
+    assert d.verdict is Verdict.SKIPPED
+    assert d.via_stash is False
+
+
 def test_update_skip_reasons_are_specific(matrix_snapshots):
     dirty = policy.decide_update(matrix_snapshots["dirty"])
     assert "change" in dirty.reason.lower()

@@ -103,6 +103,7 @@ repo-manager switch-default [OPTIONS]
 | `--dry-run` | Preview; make no changes. |
 | `--yes`, `-y` | Skip the confirmation prompt. |
 | `--ignore-skips` | Exit 0 even when repos are safety-skipped. |
+| `--stash-and-update` | For dirty repos: stash, switch and fast-forward, then restore. |
 | `--jobs` | Parallel workers for fetches. |
 | `--json` | Emit JSON instead of a table. |
 | `--help` | Show this message and exit. |
@@ -124,6 +125,7 @@ repo-manager update [OPTIONS]
 | `--dry-run` | Preview; make no changes. |
 | `--yes`, `-y` | Skip the confirmation prompt. |
 | `--ignore-skips` | Exit 0 even when repos are safety-skipped. |
+| `--stash-and-update` | For dirty repos: stash, fast-forward, then restore (conflict-safe). |
 | `--jobs` | Parallel workers for fetches. |
 | `--json` | Emit JSON instead of a table. |
 | `--help` | Show this message and exit. |

@@ -375,6 +375,7 @@ def _run_mutation(
     jobs: Optional[int],
     json_out: bool,
     checkout_branch: Optional[str] = None,
+    stash: bool = False,
 ) -> None:
     profile = _resolve_profile(project)
     selected = _select(profile, group, repo)
@@ -392,6 +393,7 @@ def _run_mutation(
         operation,
         fetch_timeout=float(profile.policy.fetch_timeout_seconds),
         checkout_branch=checkout_branch,
+        stash=stash,
     )
 
     if select:
@@ -466,13 +468,18 @@ def update(
     ignore_skips: bool = typer.Option(
         False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
     ),
+    stash_and_update: bool = typer.Option(
+        False,
+        "--stash-and-update",
+        help="For dirty repos: stash, fast-forward, then restore (conflict-safe).",
+    ),
     jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
     """Fast-forward the current branch of eligible repositories. Never switches branches."""
     _run_mutation(
         Operation.UPDATE, project, group, repo, select, dry_run, yes, ignore_skips,
-        jobs, json_out,
+        jobs, json_out, stash=stash_and_update,
     )
 
 
@@ -487,13 +494,18 @@ def switch_default(
     ignore_skips: bool = typer.Option(
         False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
     ),
+    stash_and_update: bool = typer.Option(
+        False,
+        "--stash-and-update",
+        help="For dirty repos: stash, switch and fast-forward, then restore.",
+    ),
     jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
     """Switch each eligible repository to its default branch and fast-forward it."""
     _run_mutation(
         Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
-        ignore_skips, jobs, json_out,
+        ignore_skips, jobs, json_out, stash=stash_and_update,
     )
 
 
@@ -506,6 +518,7 @@ def sync(
     dry_run: bool = typer.Option(False, "--dry-run"),
     yes: bool = typer.Option(False, "--yes", "-y"),
     ignore_skips: bool = typer.Option(False, "--ignore-skips"),
+    stash_and_update: bool = typer.Option(False, "--stash-and-update"),
     jobs: Optional[int] = typer.Option(None),
     json_out: bool = typer.Option(False, "--json"),
 ) -> None:
@@ -516,7 +529,7 @@ def sync(
     )
     _run_mutation(
         Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
-        ignore_skips, jobs, json_out,
+        ignore_skips, jobs, json_out, stash=stash_and_update,
     )
 
 
@@ -589,6 +602,7 @@ _MANUAL = """\
   --select EXPR   Filter by expression: all, clean, dirty, ready, ahead,
                   group:NAME, search:TEXT, name:NAME (comma-separated union).
   --fetch         Fetch before computing ahead/behind (status only).
+  --stash-and-update  Dirty repos: stash, fast-forward, restore (update/switch-default).
   --dry-run       Preview a mutation; make no changes.
   --yes / -y      Skip the confirmation prompt (required non-interactively).
   --ignore-skips  Exit 0 even when repositories are safety-skipped.

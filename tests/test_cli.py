@@ -203,6 +203,26 @@ def test_select_expression_filters(home, mutws):
     assert len(data["results"]) >= 1
 
 
+def test_stash_and_update_dirty_repo(home, mutws):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+
+    dirty = mutws.workspace / "dirty"
+    before = GitBackend().head_sha(dirty)
+    result = runner.invoke(
+        app, ["update", "--repo", "dirty", "--stash-and-update", "--yes", "--json"]
+    )
+    assert result.exit_code == 0, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    res = data["results"][0]
+    assert res["verdict"] == "updated"
+    assert res["stash"]["stashed"] is True
+    assert res["stash"]["restore"] == "clean"
+    # Fast-forward happened and local work is intact.
+    assert GitBackend().head_sha(dirty) != before
+    assert (dirty / "untracked.txt").exists()
+
+
 def test_switch_default_returns_to_main(home, mutws):
     _init(mutws.workspace)
     from repo_manager.git_backend import GitBackend

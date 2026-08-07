@@ -13,7 +13,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .models import Classification, InProgressOperation, RepositorySnapshot, Verdict
+from .models import (
+    Classification,
+    InProgressOperation,
+    Relationship,
+    RepositorySnapshot,
+    Verdict,
+)
 
 
 @dataclass
@@ -22,10 +28,11 @@ class Decision:
     planned: str = ""
     reason: str = ""
     next_action: str | None = None
+    via_stash: bool = False  # executor should stash, mutate, then restore
 
 
-def _proceed(planned: str) -> Decision:
-    return Decision(verdict=Verdict.PROCEED, planned=planned)
+def _proceed(planned: str, via_stash: bool = False) -> Decision:
+    return Decision(verdict=Verdict.PROCEED, planned=planned, via_stash=via_stash)
 
 
 def _skip(reason: str, next_action: str) -> Decision:
@@ -48,7 +55,7 @@ def _in_progress_skip(snap: RepositorySnapshot) -> Decision | None:
 # state. It touches only the current branch and never switches.
 
 
-def decide_update(snap: RepositorySnapshot) -> Decision:
+def decide_update(snap: RepositorySnapshot, stash: bool = False) -> Decision:
     if (d := _in_progress_skip(snap)) is not None:
         return d
 
@@ -56,9 +63,13 @@ def decide_update(snap: RepositorySnapshot) -> Decision:
     w = snap.worktree
 
     if cls is Classification.DIRTY:
+        if stash:
+            # Dirtiness is no longer the blocker; decide on the remote relationship,
+            # exactly as a clean repo would be judged.
+            return _stash_update_decision(snap)
         return _skip(
             f"{w.total_changes} local change(s) would be at risk",
-            "commit or stash the changes, or use --stash-and-update (phase 3)",
+            "commit or stash the changes, or use --stash-and-update",
         )
     if cls is Classification.DETACHED:
         return _skip(
@@ -103,6 +114,46 @@ def decide_update(snap: RepositorySnapshot) -> Decision:
     return _proceed("already up to date")
 
 
+def _stash_update_decision(snap: RepositorySnapshot) -> Decision:
+    """Decide an update for a dirty repo under --stash-and-update.
+
+    Only the fast-forward-able case actually stashes; every other remote state gets
+    the same skip a clean repo would, because stashing cannot make it updatable.
+    """
+    upstream = snap.checkout.upstream_branch
+    rel = snap.remote.relationship
+
+    if upstream is None:
+        return _skip(
+            "the current branch has no upstream",
+            "set an upstream with git branch --set-upstream-to",
+        )
+    if rel is Relationship.UNKNOWN:
+        return _skip(
+            "the remote could not be reached",
+            "check network or credentials, then retry",
+        )
+    if rel is Relationship.DIVERGED:
+        a = snap.remote.ahead_count or 0
+        b = snap.remote.behind_count or 0
+        return _skip(
+            f"local and upstream have diverged (↑{a} ↓{b})",
+            "reconcile manually; stashing cannot resolve a divergence",
+        )
+    if rel is Relationship.AHEAD:
+        return _skip(
+            "ahead of upstream; nothing to fast-forward",
+            "push your local commits when ready",
+        )
+    if rel is Relationship.BEHIND:
+        b = snap.remote.behind_count or 0
+        return _proceed(
+            f"stash, fast-forward {upstream} ({b} behind), restore", via_stash=True
+        )
+    # CURRENT: nothing to update, so no need to disturb the worktree at all.
+    return _proceed("already up to date")
+
+
 # -- switch-default -----------------------------------------------------------------
 #
 # Gates on worktree/HEAD/default-known/remote-availability only. Whether the default
@@ -110,7 +161,7 @@ def decide_update(snap: RepositorySnapshot) -> Decision:
 # the snapshot describes the *current* branch, not the default.
 
 
-def decide_switch_default(snap: RepositorySnapshot) -> Decision:
+def decide_switch_default(snap: RepositorySnapshot, stash: bool = False) -> Decision:
     if (d := _in_progress_skip(snap)) is not None:
         return d
 
@@ -123,6 +174,16 @@ def decide_switch_default(snap: RepositorySnapshot) -> Decision:
             "set default_branch for this repository in the profile",
         )
     if cls is Classification.DIRTY:
+        if stash:
+            if snap.remote.fetch_attempted and not snap.remote.data_is_current:
+                return _skip(
+                    "the remote could not be reached",
+                    "check network or credentials, then retry",
+                )
+            return _proceed(
+                f"stash, switch to {default} and fast-forward, restore",
+                via_stash=True,
+            )
         return _skip(
             f"{snap.worktree.total_changes} local change(s) block a branch switch",
             "commit or stash the changes first",

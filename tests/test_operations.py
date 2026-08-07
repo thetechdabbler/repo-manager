@@ -195,6 +195,92 @@ def test_checkout_missing_branch_skipped(coord, builder):
     assert "neither" in result.reason.lower() or "not found" in result.reason.lower()
 
 
+# -- stash-and-update ---------------------------------------------------------------
+
+
+def _run_stash(coord, spec, operation=Operation.UPDATE):
+    plan = coord.build_plan([spec], operation, stash=True)
+    report = coord.execute(
+        plan, operation, project_name="t", project_root="/", dry_run=False
+    )
+    return report.results[0]
+
+
+def test_stash_update_clean_restore(coord, builder):
+    """Local work untouched by upstream: stash, ff, restore cleanly, drop the stash."""
+    repo = builder.build_stash_ok()
+    g = GitBackend()
+    before = g.head_sha(repo)
+
+    result = _run_stash(coord, _spec("stash-ok", repo))
+
+    assert result.verdict is Verdict.UPDATED
+    assert result.restore == "clean"
+    assert g.head_sha(repo) != before          # fast-forward happened
+    assert g.stash_list(repo) == []            # stash consumed
+    assert (repo / "docs" / "notes.md").read_text() == "my local notes\n"
+
+
+def test_stash_update_conflict_preserves_work(coord, builder):
+    """Conflicting restore: report failure, keep the stash, lose nothing."""
+    repo = builder.build_stash_conflict()
+    g = GitBackend()
+    before = g.head_sha(repo)
+
+    result = _run_stash(coord, _spec("stash-conflict", repo))
+
+    assert result.verdict is Verdict.FAILED
+    assert result.restore == "conflict"
+    assert result.stashed is True
+    assert result.next_action and "stash" in result.next_action.lower()
+    # The update still happened, and the stash is retained for recovery.
+    assert g.head_sha(repo) != before
+    stashes = g.stash_list(repo)
+    assert len(stashes) == 1
+    # The preserved stash carries our uniquely named entry.
+    assert "repo-manager auto-stash" in stashes[0][1]
+
+
+def test_stash_never_touches_in_progress(coord, builder):
+    """Even with --stash-and-update, a rebasing repo is skipped and never stashed."""
+    repo = builder.build_rebase_in_progress()
+    g = GitBackend()
+    result = _run_stash(coord, _spec("rebase-in-progress", repo))
+    assert result.verdict is Verdict.SKIPPED
+    assert result.stashed is False
+    assert g.stash_list(repo) == []
+
+
+def test_stash_skips_dirty_diverged(coord, builder):
+    """Stashing cannot resolve a divergence, so a dirty+diverged repo still skips."""
+    repo = builder.build_diverged()
+    from conftest import write
+
+    write(repo / "local-edit.txt", "uncommitted\n")  # now dirty AND diverged
+    result = _run_stash(coord, _spec("diverged", repo))
+    assert result.verdict is Verdict.SKIPPED
+    assert "diverged" in result.reason.lower()
+    assert GitBackend().stash_list(repo) == []
+
+
+def test_stash_switch_default_restores_onto_default(coord, builder):
+    """Dirty on a feature branch: stash, switch to default, ff, restore there."""
+    repo = builder.build_clean_behind()  # main is behind upstream
+    git(repo, "switch", "-q", "-c", "feature/work")
+    from conftest import write
+
+    write(repo / "scratch.txt", "wip\n")  # dirty on the feature branch
+    g = GitBackend()
+
+    result = _run_stash(coord, _spec("clean-behind", repo), Operation.SWITCH_DEFAULT)
+
+    assert result.verdict is Verdict.UPDATED
+    assert result.restore == "clean"
+    assert g.current_branch(repo) == "main"
+    assert (repo / "scratch.txt").exists()   # local work carried over
+    assert g.stash_list(repo) == []
+
+
 # -- report shape -------------------------------------------------------------------
 
 

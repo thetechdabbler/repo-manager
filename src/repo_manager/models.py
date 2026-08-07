@@ -287,6 +287,10 @@ class OperationResult:
     after_head: str | None = None
     commands: list[str] = field(default_factory=list)
     error: str | None = None
+    # Stash lifecycle (only set when --stash-and-update creates a stash).
+    stashed: bool = False
+    stash_reference: str | None = None
+    restore: str | None = None  # "clean" | "conflict" | "error"
 
     @property
     def changed(self) -> bool:
@@ -308,6 +312,11 @@ class OperationResult:
             "changed": self.changed,
             "commands": list(self.commands),
             "error": self.error,
+            "stash": {
+                "stashed": self.stashed,
+                "reference": self.stash_reference,
+                "restore": self.restore,
+            },
         }
 
 
