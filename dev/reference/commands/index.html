@@ -771,6 +771,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#switch-default" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1048,6 +1059,56 @@
 <tr>
 <td><code>--jobs</code></td>
 <td>Parallel workers for reads/fetches.</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit JSON instead of a table.</td>
+</tr>
+<tr>
+<td><code>--help</code></td>
+<td>Show this message and exit.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="summary"><code>summary</code><a class="headerlink" href="#summary" title="Permanent link">&para;</a></h3>
+<p>Summarize commits across repositories since a date. Read-only.</p>
+<div class="highlight"><pre><span></span><code>repo-manager summary [OPTIONS]
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--since</code></td>
+<td>Window: 7d, 2w, 24h, an ISO date, or 'yesterday'. (default: <code>7d</code>)</td>
+</tr>
+<tr>
+<td><code>--project</code></td>
+<td>Profile name; defaults to active.</td>
+</tr>
+<tr>
+<td><code>--group</code></td>
+<td>Limit to a repository group.</td>
+</tr>
+<tr>
+<td><code>--repo</code></td>
+<td>Limit to one repository.</td>
+</tr>
+<tr>
+<td><code>--select</code></td>
+<td>Selection expression.</td>
+</tr>
+<tr>
+<td><code>--markdown</code></td>
+<td>Write a Markdown report to this path.</td>
+</tr>
+<tr>
+<td><code>--jobs</code></td>
+<td>Parallel workers.</td>
 </tr>
 <tr>
 <td><code>--json</code></td>

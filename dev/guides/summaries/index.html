@@ -463,6 +463,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Summaries
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -479,6 +497,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-window" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The window
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-collects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it collects
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selecting-repositories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting repositories
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -742,22 +823,41 @@
 
 
 <h1 id="summaries">Summaries<a class="headerlink" href="#summaries" title="Permanent link">&para;</a></h1>
-<div class="admonition note">
-<p class="admonition-title">Planned for a later release</p>
-<p><code>summary</code> is designed and specified but not yet shipped. This page describes the
-intended behavior; it will be marked stable when the feature lands.</p>
-</div>
 <p><code>summary</code> answers "what changed across the workspace recently?" It is read-only and
 produces the same structured report in terminal, JSON, and Markdown form.</p>
 <div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d
 repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span><span class="m">2026</span>-07-01<span class="w"> </span>--group<span class="w"> </span>backend
 repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d<span class="w"> </span>--markdown<span class="w"> </span>report.md
 </code></pre></div>
-<p>For each repository and commit range it collects commit SHAs, subjects, authors and
-timestamps, files changed, insertion and deletion counts, the top-level directories
-touched, and any parseable ticket references.</p>
-<p>Summaries are date-based by design. There is no stored review cursor to go stale after
-a rebase, and no history-reachability problem to reason about.</p>
+<h2 id="the-window">The window<a class="headerlink" href="#the-window" title="Permanent link">&para;</a></h2>
+<p><code>--since</code> accepts duration shorthand (<code>7d</code>, <code>2w</code>, <code>24h</code>), an ISO date
+(<code>2026-07-01</code>), or any expression git understands (<code>yesterday</code>, <code>2 weeks ago</code>). It
+defaults to <code>7d</code>.</p>
+<p><strong>Date rule:</strong> commits are selected by committer date, first-parent, on each
+repository's currently checked-out branch (HEAD). There is no stored review cursor, so
+nothing goes stale after a rebase; the range is always derived from <code>--since</code>.</p>
+<h2 id="what-it-collects">What it collects<a class="headerlink" href="#what-it-collects" title="Permanent link">&para;</a></h2>
+<p>Per repository, and aggregated across the workspace:</p>
+<ul>
+<li>Commit SHA, author, committer date, and subject.</li>
+<li>Insertions, deletions, and files changed per commit and in total.</li>
+<li>The top-level directories touched, ordered by how many files changed in each.</li>
+<li>Detected references: JIRA-style ticket keys (<code>ABC-123</code>) and conventional-commit
+  types (<code>feat</code>, <code>fix</code>, ...) parsed from subjects.</li>
+</ul>
+<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Default: a terminal table with a per-repository commit breakdown.</li>
+<li><code>--json</code>: the full structured <code>SummaryReport</code> (stable, versioned) for automation.</li>
+<li><code>--markdown &lt;path&gt;</code>: a handoff-ready Markdown report, ideal for a standup note or a
+  review summary.</li>
+</ul>
+<p>The three renderers are views of one structure, so the JSON is the contract and the
+table and Markdown never diverge from it.</p>
+<h2 id="selecting-repositories">Selecting repositories<a class="headerlink" href="#selecting-repositories" title="Permanent link">&para;</a></h2>
+<p><code>--group</code>, <code>--repo</code>, and <code>--select</code> apply. For summaries, <code>--select</code> supports
+<code>all</code>, <code>changed</code>, <code>quiet</code>, <code>name:NAME</code>, <code>search:TEXT</code>, and a bare name or path; use
+<code>--group</code> to scope by group.</p>
 
 
 
