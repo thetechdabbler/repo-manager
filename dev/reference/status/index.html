@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://thetechdabbler.github.io/repo-manager/dev/reference/commands/">
+        <link rel="canonical" href="https://thetechdabbler.github.io/repo-manager/dev/reference/status/">
       
       
-        <link rel="prev" href="../../concepts/configuration/">
+        <link rel="prev" href="../init/">
       
       
-        <link rel="next" href="../../contributing/">
+        <link rel="next" href="../update/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Commands - repo-manager</title>
+        <title>status - repo-manager</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#command-reference" class="md-skip">
+        <a href="#status" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Commands
+              status
             
           </span>
         </div>
@@ -308,13 +308,13 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../" class="md-tabs__link">
           
   
   
     
   
-  Reference
+  Commands
 
         </a>
       </li>
@@ -759,6 +759,24 @@
     
       
         
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
       
     
     
@@ -779,14 +797,15 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
     
   
-    Reference
+    Commands
   
 
     
@@ -794,19 +813,55 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Reference
+    Commands
   
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../init/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -831,7 +886,7 @@
   <span class="md-ellipsis">
     
   
-    Commands
+    status
   
 
     
@@ -849,7 +904,7 @@
   <span class="md-ellipsis">
     
   
-    Commands
+    status
   
 
     
@@ -875,10 +930,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#checkout" class="md-nav__link">
+  <a href="#what-it-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        checkout
+        What it does
       
     </span>
   </a>
@@ -886,10 +941,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#forget" class="md-nav__link">
+  <a href="#how-the-options-change-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        forget
+        How the options change it
       
     </span>
   </a>
@@ -897,10 +952,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
+  <a href="#reading-the-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        help
+        Reading the table
       
     </span>
   </a>
@@ -908,10 +963,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#init" class="md-nav__link">
+  <a href="#options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        init
+        Options
       
     </span>
   </a>
@@ -919,76 +974,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#profiles" class="md-nav__link">
+  <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       
-        profiles
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#switch-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        switch-default
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        update
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        version
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit codes
+        Examples
       
     </span>
   </a>
@@ -999,6 +988,174 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../switch-default/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    switch-default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../checkout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    checkout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../summary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    summary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../forget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    forget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utility commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1065,10 +1222,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#checkout" class="md-nav__link">
+  <a href="#what-it-does" class="md-nav__link">
     <span class="md-ellipsis">
       
-        checkout
+        What it does
       
     </span>
   </a>
@@ -1076,10 +1233,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#forget" class="md-nav__link">
+  <a href="#how-the-options-change-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        forget
+        How the options change it
       
     </span>
   </a>
@@ -1087,10 +1244,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#help" class="md-nav__link">
+  <a href="#reading-the-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        help
+        Reading the table
       
     </span>
   </a>
@@ -1098,10 +1255,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#init" class="md-nav__link">
+  <a href="#options" class="md-nav__link">
     <span class="md-ellipsis">
       
-        init
+        Options
       
     </span>
   </a>
@@ -1109,76 +1266,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#profiles" class="md-nav__link">
+  <a href="#examples" class="md-nav__link">
     <span class="md-ellipsis">
       
-        profiles
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#switch-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        switch-default
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#update" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        update
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        version
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit codes
+        Examples
       
     </span>
   </a>
@@ -1205,172 +1296,74 @@
   
 
 
+<h1 id="status">status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h1>
+<p>Report the state of every selected repository. Read-only unless <code>--fetch</code> is passed.</p>
+<h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
+<p><code>status</code> builds a snapshot of each selected repository: current branch (or detached
+HEAD), upstream, staged / unstaged / untracked counts, ahead and behind counts, and
+any in-progress operation. It reduces each to one <a href="../../concepts/safety-model/">state</a>
+and renders a table.</p>
+<p>Without <code>--fetch</code> it does not contact any remote, and the ahead/behind column reads
+<code>no-fetch</code> rather than showing possibly-stale numbers. With <code>--fetch</code>, remotes are
+fetched in parallel first (each with a timeout), so an unreachable or credential-gated
+remote becomes <code>remote-unavailable</code> instead of hanging the run. Stale remote-tracking
+refs are never presented as if they were current.</p>
+<pre class="mermaid"><code>flowchart TD
+  A["repo-manager status"] --&gt; B["Resolve profile + select repos"]
+  B --&gt; C{"--fetch ?"}
+  C -- "yes" --&gt; D["git fetch --prune&lt;br/&gt;parallel, with timeout"]
+  C -- "no" --&gt; E["Use local refs&lt;br/&gt;ahead/behind = no-fetch"]
+  D --&gt; F["Snapshot each repo&lt;br/&gt;branch, dirty, ahead/behind, in-progress"]
+  E --&gt; F
+  F --&gt; G["Classify into one state"]
+  G --&gt; H["Render table or JSON"]</code></pre>
+<h2 id="how-the-options-change-it">How the options change it<a class="headerlink" href="#how-the-options-change-it" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>--fetch</code></strong> updates remote-tracking refs first so ahead/behind counts are real.
+  This is the only thing that makes <code>status</code> touch the network.</li>
+<li><strong><code>--group</code> / <code>--repo</code> / <code>--select</code></strong> narrow which repositories are reported. See
+  <a href="../#selecting-repositories">selecting repositories</a>.</li>
+<li><strong><code>--json</code></strong> emits the full, versioned <code>StatusReport</code> structure instead of a table.
+  This is the contract for scripts.</li>
+<li><strong><code>--jobs</code></strong> sets how many repositories are read and fetched in parallel.</li>
+</ul>
+<h2 id="reading-the-table">Reading the table<a class="headerlink" href="#reading-the-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Branch</td>
+<td>Current branch, or <code>detached@&lt;sha&gt;</code></td>
+</tr>
+<tr>
+<td>State</td>
+<td>One of the <a href="../../concepts/safety-model/">repository states</a></td>
+</tr>
+<tr>
+<td>↑ / ↓</td>
+<td>Commits ahead / behind upstream, or <code>no-fetch</code> / <code>unreachable</code></td>
+</tr>
+<tr>
+<td>Changes</td>
+<td><code>Ns</code> staged, <code>Nm</code> modified, <code>N?</code> untracked, <code>Nu</code> unmerged</td>
+</tr>
+<tr>
+<td>Last commit</td>
+<td>Short SHA and subject</td>
+</tr>
+</tbody>
+</table>
+<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
 <!-- GENERATED by scripts/gen_docs.py. Do not edit by hand; run `python scripts/gen_docs.py` and commit the result. -->
 
-<h1 id="command-reference">Command reference<a class="headerlink" href="#command-reference" title="Permanent link">&para;</a></h1>
-<p>Generated from repo-manager <code>0.1.0</code>.</p>
-<h3 id="checkout"><code>checkout</code><a class="headerlink" href="#checkout" title="Permanent link">&para;</a></h3>
-<p>Check out a branch across selected repositories, creating tracking branches as needed.</p>
-<div class="highlight"><pre><span></span><code>repo-manager checkout [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--branch</code></td>
-<td>Branch to check out, or 'default' for each repo's default.</td>
-</tr>
-<tr>
-<td><code>--project</code></td>
-<td>Profile name; defaults to active.</td>
-</tr>
-<tr>
-<td><code>--group</code></td>
-<td>Limit to a repository group.</td>
-</tr>
-<tr>
-<td><code>--repo</code></td>
-<td>Limit to one repository.</td>
-</tr>
-<tr>
-<td><code>--select</code></td>
-<td>Selection expression.</td>
-</tr>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Preview; make no changes.</td>
-</tr>
-<tr>
-<td><code>--yes</code>, <code>-y</code></td>
-<td>Skip the confirmation prompt.</td>
-</tr>
-<tr>
-<td><code>--ignore-skips</code></td>
-<td>Exit 0 even when repos are safety-skipped.</td>
-</tr>
-<tr>
-<td><code>--jobs</code></td>
-<td>Parallel workers for fetches.</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Emit JSON instead of a table.</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="forget"><code>forget</code><a class="headerlink" href="#forget" title="Permanent link">&para;</a></h3>
-<p>Remove a saved profile. Deletes only its config file, never any repository.</p>
-<div class="highlight"><pre><span></span><code>repo-manager forget [OPTIONS] {name}
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--yes</code>, <code>-y</code></td>
-<td>Skip the confirmation prompt.</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="help"><code>help</code><a class="headerlink" href="#help" title="Permanent link">&para;</a></h3>
-<p>Show a quick manual with commands, states, and examples.</p>
-<div class="highlight"><pre><span></span><code>repo-manager help [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="init"><code>init</code><a class="headerlink" href="#init" title="Permanent link">&para;</a></h3>
-<p>Discover a workspace and write a profile. Performs no git mutation.</p>
-<div class="highlight"><pre><span></span><code>repo-manager init [OPTIONS] {path}
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--name</code></td>
-<td>Profile name; defaults to the dir name.</td>
-</tr>
-<tr>
-<td><code>--max-depth</code></td>
-<td>Maximum discovery depth. (default: <code>4</code>)</td>
-</tr>
-<tr>
-<td><code>--remote</code></td>
-<td>Default remote name. (default: <code>origin</code>)</td>
-</tr>
-<tr>
-<td><code>--include-linked-worktrees</code></td>
-<td>Include linked worktrees.</td>
-</tr>
-<tr>
-<td><code>--yes</code>, <code>-y</code></td>
-<td>Skip interactive selection; take all.</td>
-</tr>
-<tr>
-<td><code>--activate</code></td>
-<td>Set this profile as the active project. (default: <code>True</code>)</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="profiles"><code>profiles</code><a class="headerlink" href="#profiles" title="Permanent link">&para;</a></h3>
-<p>List known profiles and mark the active one.</p>
-<div class="highlight"><pre><span></span><code>repo-manager profiles [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="status"><code>status</code><a class="headerlink" href="#status" title="Permanent link">&para;</a></h3>
-<p>Show repository status. Read-only unless --fetch is passed.</p>
 <div class="highlight"><pre><span></span><code>repo-manager status [OPTIONS]
 </code></pre></div>
+<p><strong>Options</strong></p>
 <table>
 <thead>
 <tr>
@@ -1409,217 +1402,13 @@
 </tr>
 </tbody>
 </table>
-<h3 id="summary"><code>summary</code><a class="headerlink" href="#summary" title="Permanent link">&para;</a></h3>
-<p>Summarize commits across repositories since a date. Read-only.</p>
-<div class="highlight"><pre><span></span><code>repo-manager summary [OPTIONS]
+<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status<span class="w">                    </span><span class="c1"># local-only, fast</span>
+repo-manager<span class="w"> </span>status<span class="w"> </span>--fetch<span class="w">            </span><span class="c1"># real ahead/behind</span>
+repo-manager<span class="w"> </span>status<span class="w"> </span>--group<span class="w"> </span>backend<span class="w">    </span><span class="c1"># one group</span>
+repo-manager<span class="w"> </span>status<span class="w"> </span>--select<span class="w"> </span>dirty<span class="w">     </span><span class="c1"># only repos with local work</span>
+repo-manager<span class="w"> </span>status<span class="w"> </span>--json<span class="w">             </span><span class="c1"># machine-readable</span>
 </code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--since</code></td>
-<td>Window: 7d, 2w, 24h, an ISO date, or 'yesterday'. (default: <code>7d</code>)</td>
-</tr>
-<tr>
-<td><code>--project</code></td>
-<td>Profile name; defaults to active.</td>
-</tr>
-<tr>
-<td><code>--group</code></td>
-<td>Limit to a repository group.</td>
-</tr>
-<tr>
-<td><code>--repo</code></td>
-<td>Limit to one repository.</td>
-</tr>
-<tr>
-<td><code>--select</code></td>
-<td>Selection expression.</td>
-</tr>
-<tr>
-<td><code>--markdown</code></td>
-<td>Write a Markdown report to this path.</td>
-</tr>
-<tr>
-<td><code>--jobs</code></td>
-<td>Parallel workers.</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Emit JSON instead of a table.</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="switch-default"><code>switch-default</code><a class="headerlink" href="#switch-default" title="Permanent link">&para;</a></h3>
-<p>Switch each eligible repository to its default branch and fast-forward it.</p>
-<div class="highlight"><pre><span></span><code>repo-manager switch-default [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--project</code></td>
-<td>Profile name; defaults to active.</td>
-</tr>
-<tr>
-<td><code>--group</code></td>
-<td>Limit to a repository group.</td>
-</tr>
-<tr>
-<td><code>--repo</code></td>
-<td>Limit to one repository.</td>
-</tr>
-<tr>
-<td><code>--select</code></td>
-<td>Selection expression.</td>
-</tr>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Preview; make no changes.</td>
-</tr>
-<tr>
-<td><code>--yes</code>, <code>-y</code></td>
-<td>Skip the confirmation prompt.</td>
-</tr>
-<tr>
-<td><code>--ignore-skips</code></td>
-<td>Exit 0 even when repos are safety-skipped.</td>
-</tr>
-<tr>
-<td><code>--stash-and-update</code></td>
-<td>For dirty repos: stash, switch and fast-forward, then restore.</td>
-</tr>
-<tr>
-<td><code>--jobs</code></td>
-<td>Parallel workers for fetches.</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Emit JSON instead of a table.</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="update"><code>update</code><a class="headerlink" href="#update" title="Permanent link">&para;</a></h3>
-<p>Fast-forward the current branch of eligible repositories. Never switches branches.</p>
-<div class="highlight"><pre><span></span><code>repo-manager update [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--project</code></td>
-<td>Profile name; defaults to active.</td>
-</tr>
-<tr>
-<td><code>--group</code></td>
-<td>Limit to a repository group.</td>
-</tr>
-<tr>
-<td><code>--repo</code></td>
-<td>Limit to one repository.</td>
-</tr>
-<tr>
-<td><code>--select</code></td>
-<td>Selection expression, e.g. 'ready', 'dirty', 'group:libraries'.</td>
-</tr>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Preview; make no changes.</td>
-</tr>
-<tr>
-<td><code>--yes</code>, <code>-y</code></td>
-<td>Skip the confirmation prompt.</td>
-</tr>
-<tr>
-<td><code>--ignore-skips</code></td>
-<td>Exit 0 even when repos are safety-skipped.</td>
-</tr>
-<tr>
-<td><code>--stash-and-update</code></td>
-<td>For dirty repos: stash, fast-forward, then restore (conflict-safe).</td>
-</tr>
-<tr>
-<td><code>--jobs</code></td>
-<td>Parallel workers for fetches.</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Emit JSON instead of a table.</td>
-</tr>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="version"><code>version</code><a class="headerlink" href="#version" title="Permanent link">&para;</a></h3>
-<p>Print the version.</p>
-<div class="highlight"><pre><span></span><code>repo-manager version [OPTIONS]
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--help</code></td>
-<td>Show this message and exit.</td>
-</tr>
-</tbody>
-</table>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>All requested operations completed or were already current.</td>
-</tr>
-<tr>
-<td>1</td>
-<td>One or more repositories failed.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Invalid command, configuration, or selection.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>One or more operations were safety-skipped (see <code>--ignore-skips</code>).</td>
-</tr>
-</tbody>
-</table>
 
 
 
@@ -1655,7 +1444,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../../concepts/configuration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration">
+          <a href="../init/" class="md-footer__link md-footer__link--prev" aria-label="Previous: init">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1665,20 +1454,20 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                Configuration
+                init
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../contributing/" class="md-footer__link md-footer__link--next" aria-label="Next: Contributing">
+          <a href="../update/" class="md-footer__link md-footer__link--next" aria-label="Next: update">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Contributing
+                update
               </div>
             </div>
             <div class="md-footer__button md-icon">

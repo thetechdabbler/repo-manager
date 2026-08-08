@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://thetechdabbler.github.io/repo-manager/dev/contributing/">
       
       
-        <link rel="prev" href="../reference/commands/">
+        <link rel="prev" href="../reference/utility/">
       
       
       
@@ -304,13 +304,13 @@
     
     
       <li class="md-tabs__item">
-        <a href="../reference/commands/" class="md-tabs__link">
+        <a href="../reference/" class="md-tabs__link">
           
   
   
     
   
-  Reference
+  Commands
 
         </a>
       </li>
@@ -755,6 +755,24 @@
     
       
         
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
       
     
     
@@ -772,14 +790,15 @@
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
+          <div class="md-nav__link md-nav__container">
+            <a href="../reference/" class="md-nav__link ">
+              
   
   
   <span class="md-ellipsis">
     
   
-    Reference
+    Commands
   
 
     
@@ -787,19 +806,27 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Reference
+    Commands
   
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
             
               
                 
@@ -808,14 +835,210 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/commands/" class="md-nav__link">
+      <a href="../reference/init/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Commands
+    init
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/status/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    update
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/switch-default/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    switch-default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/checkout/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    checkout
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/summary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    summary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/forget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    forget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/utility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utility commands
   
 
     
@@ -1082,11 +1305,14 @@ outcome.</p>
 model, the policy engine, and the CLI are all asserted against it. When you add a
 state or change a classification, update the matrix first; it is the specification.</p>
 <h2 id="generated-docs">Generated docs<a class="headerlink" href="#generated-docs" title="Permanent link">&para;</a></h2>
-<p>Two pages are generated from the code and must not be edited by hand:</p>
+<p>Some docs are generated from the code and must not be edited by hand:</p>
 <ul>
-<li><code>docs/reference/commands.md</code> from the CLI definitions</li>
-<li><code>docs/concepts/safety-model.md</code> from the state enum and the policy functions</li>
+<li><code>docs/reference/_generated/*.md</code>, the per-command synopsis and option tables,
+  embedded into the command pages via snippets</li>
+<li><code>docs/concepts/safety-model.md</code>, from the state enum and the policy functions</li>
 </ul>
+<p>The hand-written command pages under <code>docs/reference/</code> (narrative, diagrams, examples)
+are authored; only the embedded <code>_generated</code> partials come from the CLI.</p>
 <p>Regenerate and validate them with:</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>docs<span class="w">          </span><span class="c1"># regenerate</span>
 make<span class="w"> </span>docs-check<span class="w">    </span><span class="c1"># fail if committed copies are stale (also run in CI)</span>
@@ -1137,7 +1363,7 @@ choices, and what is deliberately deferred.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../reference/commands/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Commands">
+          <a href="../reference/utility/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Utility commands">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1147,7 +1373,7 @@ choices, and what is deliberately deferred.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Commands
+                Utility commands
               </div>
             </div>
           </a>
