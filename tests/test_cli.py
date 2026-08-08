@@ -112,6 +112,29 @@ def test_help_command_lists_commands_and_states(home):
     assert "Exit codes" in result.stdout
 
 
+def test_init_include_nested_discovers_umbrella_children(home, builder):
+    umbrella = builder.build_umbrella_root()
+
+    # Without --include-nested: only the umbrella repo is found.
+    plain = runner.invoke(app, ["init", str(umbrella), "--name", "plain", "--yes"])
+    assert plain.exit_code == 0, plain.stdout + plain.stderr
+    plain_paths = {r.path for r in config.load_profile("plain").repositories}
+    assert plain_paths == {"."}
+
+    # With --include-nested: the nested independent clones appear too.
+    nested = runner.invoke(
+        app, ["init", str(umbrella), "--name", "nested", "--include-nested", "--yes"]
+    )
+    assert nested.exit_code == 0, nested.stdout + nested.stderr
+    profile = config.load_profile("nested")
+    paths = {r.path for r in profile.repositories}
+    assert {".", "platform", "domain-agents/agent-a", "mcps/mcp-a"} <= paths
+    assert "libs/shared" not in paths           # submodule skipped
+    assert not any("node_modules" in p for p in paths)
+    # The setting is persisted so the layout is documented in the profile.
+    assert profile.discovery.descend_into_repositories is True
+
+
 def test_init_on_empty_dir_fails(home, tmp_path):
     empty = tmp_path / "empty"
     empty.mkdir()

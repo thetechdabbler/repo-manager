@@ -38,8 +38,32 @@ flowchart TD
 - **`--remote`** sets the default remote recorded in the profile (default `origin`).
 - **`--include-linked-worktrees`** includes linked worktrees (a `.git` *file* rather
   than a directory), which are skipped by default.
+- **`--include-nested`** keeps discovery walking *past* a repository, so independent
+  clones nested inside an umbrella repo are found. See below.
 - **`--yes` / `-y`** skips the interactive table and includes every repository found.
   Use it in scripts.
+
+## Umbrella repositories (`--include-nested`)
+
+By default, discovery stops at the first `.git` it finds and does not look inside a
+repository, so a repository's own subdirectories and submodules are never listed as
+separate entries.
+
+That rule hides a common layout: an **umbrella repository** whose working tree
+contains independent clones (a services checkout that itself holds `platform`,
+`domain-agents/*`, and so on). Because the umbrella root is itself a repo, plain
+`init` records only the root and prunes everything beneath it.
+
+`--include-nested` descends past a found repository to surface the independent clones
+inside it. It stays conservative:
+
+- Only **independent clones** (their own `.git` *directory*) are surfaced.
+- **Submodules** and **linked worktrees** (a `.git` *file*) are skipped, so
+  dependency and package repos do not flood the list.
+- Excluded directories (`node_modules`, `.venv`, `vendor`, build output, and the
+  rest) are still skipped.
+
+The setting is saved to the profile as `discovery.descend_into_repositories`.
 - **`--activate`** controls whether the new profile becomes the active one. On by
   default, so later commands need no `--project`.
 
@@ -58,6 +82,9 @@ repo-manager init ~/work/services --name services --yes
 
 # Shallow scan against a non-origin remote.
 repo-manager init ~/work/services --max-depth 2 --remote upstream --yes
+
+# Umbrella repo: the root is itself a git repo holding independent clones.
+repo-manager init ~/work/services-env --name services --include-nested
 ```
 
 See [Configuration](../concepts/configuration.md) for the profile schema and the full

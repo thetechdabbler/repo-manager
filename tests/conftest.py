@@ -470,6 +470,44 @@ class WorkspaceBuilder:
         git(deep, "init", "-q", "-b", "main")
         commit_file(deep, "deep.txt", "deep\n", "Deep commit")
 
+    def build_umbrella_root(self) -> Path:
+        """An umbrella directory that is itself a Git repository, containing:
+
+        - independent full clones nested inside it (platform, domain-agents/agent-a,
+          mcps/mcp-a),
+        - a registered submodule (libs/shared; its `.git` is a file),
+        - a package repository under an excluded directory (node_modules/vendored).
+
+        This is the layout that plain discovery cannot see, because it stops at the
+        umbrella's own `.git`.
+        """
+        umbrella = self.root / "umbrella"
+        umbrella.mkdir(parents=True, exist_ok=True)
+        git(umbrella, "init", "-q", "-b", "main")
+        commit_file(umbrella, "README.md", "# umbrella\n", "Umbrella init")
+
+        for nested in ("platform", "domain-agents/agent-a", "mcps/mcp-a"):
+            slug = nested.replace("/", "-")
+            bare = self.make_remote(slug)
+            self.seed(slug, bare)
+            target = umbrella / nested
+            target.parent.mkdir(parents=True, exist_ok=True)
+            git(target.parent, "clone", "-q", str(bare), str(target))
+
+        # A submodule: its working directory has a `.git` file, not a directory.
+        sub_bare = self.make_remote("shared-lib")
+        self.seed("shared-lib", sub_bare)
+        git(umbrella, "submodule", "add", "-q", str(sub_bare), "libs/shared")
+        git(umbrella, "commit", "-q", "-m", "Add shared submodule")
+
+        # A package repository under an excluded directory.
+        pkg = umbrella / "node_modules" / "vendored"
+        pkg.mkdir(parents=True, exist_ok=True)
+        git(pkg, "init", "-q", "-b", "main")
+        commit_file(pkg, "index.js", "// vendored\n", "Vendored commit")
+
+        return umbrella
+
 
 # --------------------------------------------------------------------------------------
 # Pytest fixtures

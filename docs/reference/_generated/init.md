@@ -18,6 +18,7 @@ repo-manager init [OPTIONS] {path}
 | `--max-depth` | Maximum discovery depth. (default: `4`) |
 | `--remote` | Default remote name. (default: `origin`) |
 | `--include-linked-worktrees` | Include linked worktrees. |
+| `--include-nested` | Descend into repos to find independent clones nested in an umbrella repo. |
 | `--yes`, `-y` | Skip interactive selection; take all. |
 | `--activate` | Set this profile as the active project. (default: `True`) |
 | `--help` | Show this message and exit. |

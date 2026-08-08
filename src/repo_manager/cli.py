@@ -253,6 +253,11 @@ def init(
     include_linked: bool = typer.Option(
         False, "--include-linked-worktrees", help="Include linked worktrees."
     ),
+    include_nested: bool = typer.Option(
+        False,
+        "--include-nested",
+        help="Descend into repos to find independent clones nested in an umbrella repo.",
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip interactive selection; take all."),
     activate: bool = typer.Option(True, help="Set this profile as the active project."),
 ) -> None:
@@ -275,6 +280,7 @@ def init(
         exclude=DEFAULT_EXCLUDES,
         backend=backend,
         include_linked_worktrees=include_linked,
+        descend_into_repositories=include_nested,
     )
 
     for w in result.warnings:
@@ -329,6 +335,7 @@ def init(
             max_depth=max_depth,
             exclude=list(DEFAULT_EXCLUDES),
             include_linked_worktrees=include_linked,
+            descend_into_repositories=include_nested,
         ),
         policy=PolicyConfig(),
         repositories=repositories,

@@ -46,6 +46,8 @@ def test_render_and_reparse_roundtrip(tmp_path):
     assert reloaded.discovery.max_depth == 3
     assert {r.name for r in reloaded.repositories} == {"root", "api"}
     assert reloaded.repos_in_group("services")[0].name == "api"
+    # New discovery flag round-trips with its default.
+    assert reloaded.discovery.descend_into_repositories is False
 
 
 def test_hand_written_comments_survive_rewrite(tmp_path):
