@@ -828,11 +828,22 @@
 </ul>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
 <p>The tool is a standalone CLI, best installed globally with
-<a href="https://pipx.pypa.io/">pipx</a> so it stays isolated from your project environments:</p>
-<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span>repo-manager
+<a href="https://pipx.pypa.io/">pipx</a> so it stays isolated from your project environments.</p>
+<p>It is installed directly from the Git repository:</p>
+<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/thetechdabbler/repo-manager.git&quot;</span>
 </code></pre></div>
-<p>To upgrade later:</p>
+<p>To upgrade later (pipx re-pulls from the same source):</p>
 <div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>upgrade<span class="w"> </span>repo-manager
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Not on PyPI</p>
+<p><code>repo-manager</code> is not published to the Python Package Index. Running
+<code>pipx install repo-manager</code> would fetch an unrelated, abandoned project of the
+same name and fail to build. Always install from the Git URL above.</p>
+</div>
+<p>To install a specific branch, or a local clone you are developing against:</p>
+<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/thetechdabbler/repo-manager.git@&lt;branch&gt;&quot;</span>
+pipx<span class="w"> </span>install<span class="w"> </span>/path/to/repo-manager
 </code></pre></div>
 <h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>version
