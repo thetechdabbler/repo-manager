@@ -817,6 +817,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1272,6 +1283,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1354,6 +1376,7 @@ default. Non-interactively, <code>--yes</code> selects everything discovered.</p
 <span class="n">include_root_repository</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;.git&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;.venv&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;node_modules&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;.pytest_cache&quot;</span><span class="p">]</span>
 <span class="n">include_linked_worktrees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="n">descend_into_repositories</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="k">[policy]</span>
 <span class="n">pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ff-only&quot;</span>
@@ -1381,6 +1404,15 @@ are rejected), an optional <code>name</code>, an optional <code>groups</code> li
 <code>default_branch</code> override, and an optional <code>remote</code> override.</p>
 <p>Groups are defined exactly one way: the per-repository <code>groups</code> array. Any command
 that accepts <code>--group</code> matches against it.</p>
+<h3 id="discovery">Discovery<a class="headerlink" href="#discovery" title="Permanent link">&para;</a></h3>
+<p><code>max_depth</code> bounds how deep the scan walks; <code>exclude</code> lists directory names to skip
+(package, vendor, and build directories by default). By default discovery stops at the
+first repository it finds and does not look inside it.</p>
+<p>Set <code>descend_into_repositories = true</code> (or pass <code>--include-nested</code> to <code>init</code>) when the
+workspace root is itself a Git repository that contains independent clones, an
+<em>umbrella</em> layout. Discovery then walks past a found repository to surface the clones
+inside it, while still skipping submodules, linked worktrees, and excluded
+directories. See <a href="../../reference/init/#umbrella-repositories-include-nested"><code>init</code></a>.</p>
 <h2 id="default-branch-inference">Default-branch inference<a class="headerlink" href="#default-branch-inference" title="Permanent link">&para;</a></h2>
 <p>When you do not set <code>default_branch</code>, it is inferred in this order, and the source is
 recorded so you can tell a proven default from a heuristic:</p>
