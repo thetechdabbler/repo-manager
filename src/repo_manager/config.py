@@ -40,6 +40,7 @@ class DiscoveryConfig:
     include_root_repository: bool = True
     exclude: list[str] = field(default_factory=list)
     include_linked_worktrees: bool = False
+    descend_into_repositories: bool = False
 
 
 @dataclass
@@ -187,6 +188,7 @@ def load_profile_from_path(path: Path) -> Profile:
         include_root_repository=bool(disc.get("include_root_repository", True)),
         exclude=list(disc.get("exclude", [])),
         include_linked_worktrees=bool(disc.get("include_linked_worktrees", False)),
+        descend_into_repositories=bool(disc.get("descend_into_repositories", False)),
     )
 
     pol = data.get("policy", {})
@@ -277,6 +279,9 @@ def render_profile(profile: Profile) -> str:
     discovery.add("include_root_repository", profile.discovery.include_root_repository)
     discovery.add("exclude", profile.discovery.exclude)
     discovery.add("include_linked_worktrees", profile.discovery.include_linked_worktrees)
+    discovery.add(
+        "descend_into_repositories", profile.discovery.descend_into_repositories
+    )
     doc.add("discovery", discovery)
 
     policy = tomlkit.table()

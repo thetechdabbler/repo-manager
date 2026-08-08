@@ -14,15 +14,40 @@ from pathlib import Path
 from .git_backend import GitBackend
 
 DEFAULT_EXCLUDES = (
+    # VCS internals and Python envs / caches
     ".git",
     ".venv",
     "venv",
-    "node_modules",
-    "outputs",
-    ".pytest_cache",
     "__pycache__",
+    ".pytest_cache",
     ".mypy_cache",
     ".tox",
+    ".ruff_cache",
+    "site-packages",
+    # JS / package managers
+    "node_modules",
+    "bower_components",
+    ".pnpm-store",
+    ".yarn",
+    ".next",
+    ".nuxt",
+    ".svelte-kit",
+    # Other ecosystems' dependency / vendor dirs
+    "vendor",
+    "Pods",
+    "Carthage",
+    ".terraform",
+    ".gradle",
+    ".cargo",
+    ".dart_tool",
+    # Build output and misc caches
+    "target",
+    "dist",
+    "build",
+    "outputs",
+    "coverage",
+    ".cache",
+    ".idea",
 )
 
 
@@ -46,6 +71,7 @@ def discover_worktrees(
     exclude: tuple[str, ...] | list[str] = DEFAULT_EXCLUDES,
     backend: GitBackend | None = None,
     include_linked_worktrees: bool = False,
+    descend_into_repositories: bool = False,
 ) -> DiscoveryResult:
     backend = backend or GitBackend()
     root = root.resolve()
@@ -67,22 +93,27 @@ def discover_worktrees(
         current, depth = stack.pop()
 
         dot_git = current / ".git"
-        if dot_git.exists():
+        if dot_git.exists() and backend.is_worktree(current):
             is_linked = backend.is_linked_worktree(current)
-            if backend.is_worktree(current):
-                repo = DiscoveredRepo(
-                    absolute_path=current,
-                    relative_path=rel(current),
-                    is_linked_worktree=is_linked,
+            repo = DiscoveredRepo(
+                absolute_path=current,
+                relative_path=rel(current),
+                is_linked_worktree=is_linked,
+            )
+            # A `.git` file (rather than directory) is a linked worktree or a
+            # submodule. Both are managed elsewhere, so skip them by default and
+            # never descend into them.
+            if is_linked and not include_linked_worktrees:
+                result.linked_worktrees.append(repo)
+                result.warnings.append(
+                    f"skipped nested worktree/submodule (.git is a file): {rel(current)}"
                 )
-                if is_linked and not include_linked_worktrees:
-                    result.linked_worktrees.append(repo)
-                    result.warnings.append(
-                        f"skipped linked worktree (shares a .git dir): {rel(current)}"
-                    )
-                else:
-                    result.repositories.append(repo)
-                # Do not descend into a repository's own tree.
+                continue
+            result.repositories.append(repo)
+            # By default, stop at a found repository so its own tree (subdirs,
+            # submodules) is not reported. With descend_into_repositories, keep
+            # walking to surface independent clones nested inside an umbrella repo.
+            if not descend_into_repositories:
                 continue
 
         if depth >= max_depth:

@@ -31,6 +31,7 @@ max_depth = 4
 include_root_repository = true
 exclude = [".git", ".venv", "node_modules", "outputs", ".pytest_cache"]
 include_linked_worktrees = false
+descend_into_repositories = false
 
 [policy]
 pull_mode = "ff-only"
@@ -61,6 +62,18 @@ are rejected), an optional `name`, an optional `groups` list, an optional
 
 Groups are defined exactly one way: the per-repository `groups` array. Any command
 that accepts `--group` matches against it.
+
+### Discovery
+
+`max_depth` bounds how deep the scan walks; `exclude` lists directory names to skip
+(package, vendor, and build directories by default). By default discovery stops at the
+first repository it finds and does not look inside it.
+
+Set `descend_into_repositories = true` (or pass `--include-nested` to `init`) when the
+workspace root is itself a Git repository that contains independent clones, an
+*umbrella* layout. Discovery then walks past a found repository to surface the clones
+inside it, while still skipping submodules, linked worktrees, and excluded
+directories. See [`init`](../reference/init.md#umbrella-repositories-include-nested).
 
 ## Default-branch inference
 
