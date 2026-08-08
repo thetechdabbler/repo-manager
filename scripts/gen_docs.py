@@ -56,63 +56,74 @@ GENERATED_NOTE = (
 # -- command reference --------------------------------------------------------------
 
 
-def _render_command(name: str, cmd) -> str:
-    lines: list[str] = [f"### `{name}`\n"]
-    help_text = (cmd.help or cmd.short_help or "").strip()
-    if help_text:
-        lines.append(help_text + "\n")
+def _metavar(name: str) -> str:
+    return name.upper()
 
+
+def render_command_partial(name: str, cmd) -> str:
+    """A synopsis + arguments + options block for one command, no page heading.
+
+    Hand-written command pages embed this via pymdownx snippets, so the option
+    tables stay generated (drift-proof) while the narrative and diagrams are authored.
+    """
     ctx = ClickContext(cmd, info_name=name)
+    lines: list[str] = [GENERATED_NOTE.rstrip(), ""]
+
     usage = cmd.collect_usage_pieces(ctx)
-    lines.append("```")
-    lines.append(f"repo-manager {name} {' '.join(usage)}".rstrip())
-    lines.append("```\n")
+    lines += ["```", f"repo-manager {name} {' '.join(usage)}".rstrip(), "```", ""]
 
-    rows = []
-    for param in cmd.get_params(ctx):
-        if getattr(param, "param_type_name", "") != "option":
-            continue
-        if getattr(param, "hidden", False):
-            continue
-        opts = ", ".join(f"`{o}`" for o in param.opts)
-        default = ""
-        if param.default not in (None, False):
-            default = f" (default: `{param.default}`)"
-        rows.append((opts, ((param.help or "") + default).strip()))
+    params = cmd.get_params(ctx)
+    args = [p for p in params if getattr(p, "param_type_name", "") == "argument"]
+    opts = [
+        p
+        for p in params
+        if getattr(p, "param_type_name", "") == "option"
+        and not getattr(p, "hidden", False)
+    ]
 
-    if rows:
-        lines.append("| Option | Description |")
-        lines.append("| --- | --- |")
-        for opts, desc in rows:
-            lines.append(f"| {opts} | {desc} |")
+    if args:
+        lines += ["**Arguments**", "", "| Argument | Description |", "| --- | --- |"]
+        for p in args:
+            suffix = "" if p.required else " _(optional)_"
+            lines.append(f"| `{_metavar(p.name)}`{suffix} | {(p.help or '').strip()} |")
         lines.append("")
-    return "\n".join(lines)
+
+    if opts:
+        lines += ["**Options**", "", "| Option | Description |", "| --- | --- |"]
+        for p in opts:
+            names = ", ".join(f"`{o}`" for o in p.opts)
+            default = ""
+            if p.default not in (None, False):
+                default = f" (default: `{p.default}`)"
+            lines.append(f"| {names} | {((p.help or '') + default).strip()} |")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
 
 
-def render_commands() -> str:
+def render_exit_codes() -> str:
+    return (
+        GENERATED_NOTE
+        + "\n"
+        + "| Code | Meaning |\n"
+        + "| --- | --- |\n"
+        + "| `0` | All requested operations completed or were already current. |\n"
+        + "| `1` | One or more repositories failed. |\n"
+        + "| `2` | Invalid command, configuration, or selection. |\n"
+        + "| `3` | One or more operations were safety-skipped (see `--ignore-skips`). |\n"
+    )
+
+
+def visible_commands() -> list[tuple[str, object]]:
     from typer.main import get_command
 
     click_app = get_command(app)
-
-    out = [GENERATED_NOTE, "# Command reference\n"]
-    out.append(f"Generated from repo-manager `{__version__}`.\n")
-
     commands = click_app.commands  # type: ignore[attr-defined]
-    for name in sorted(commands):
-        cmd = commands[name]
-        if getattr(cmd, "hidden", False):
-            continue
-        out.append(_render_command(name, cmd))
-
-    out.append("## Exit codes\n")
-    out.append("| Code | Meaning |")
-    out.append("| --- | --- |")
-    out.append("| 0 | All requested operations completed or were already current. |")
-    out.append("| 1 | One or more repositories failed. |")
-    out.append("| 2 | Invalid command, configuration, or selection. |")
-    out.append("| 3 | One or more operations were safety-skipped (see `--ignore-skips`). |")
-    out.append("")
-    return "\n".join(out)
+    return [
+        (name, commands[name])
+        for name in sorted(commands)
+        if not getattr(commands[name], "hidden", False)
+    ]
 
 
 # -- safety model -------------------------------------------------------------------
@@ -224,10 +235,17 @@ def render_safety_model() -> str:
 
 # -- driver -------------------------------------------------------------------------
 
-TARGETS = {
-    REPO_ROOT / "docs" / "reference" / "commands.md": render_commands,
-    REPO_ROOT / "docs" / "concepts" / "safety-model.md": render_safety_model,
-}
+GEN_DIR = REPO_ROOT / "docs" / "reference" / "_generated"
+
+
+def build_targets() -> dict:
+    """Map every generated file path to its content string."""
+    targets: dict = {}
+    for name, cmd in visible_commands():
+        targets[GEN_DIR / f"{name}.md"] = render_command_partial(name, cmd)
+    targets[GEN_DIR / "exit-codes.md"] = render_exit_codes()
+    targets[REPO_ROOT / "docs" / "concepts" / "safety-model.md"] = render_safety_model()
+    return targets
 
 
 def main() -> int:
@@ -236,8 +254,8 @@ def main() -> int:
     args = parser.parse_args()
 
     stale = []
-    for path, render in TARGETS.items():
-        content = render().rstrip() + "\n"
+    for path, rendered in build_targets().items():
+        content = rendered.rstrip() + "\n"
         if args.check:
             current = path.read_text(encoding="utf-8") if path.exists() else ""
             if current != content:
