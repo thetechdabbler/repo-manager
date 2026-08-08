@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
-from .git_backend import GitBackend
+from .git_backend import GitBackend, redact_url
 from .models import (
     DEFAULT_BRANCH_CANDIDATES,
     Checkout,
@@ -234,16 +234,27 @@ class RepositoryService:
             elif res.ok:
                 state.fetch_result = FetchResult.OK
             else:
-                stderr = (res.stderr or "").lower()
+                stderr = (res.stderr or "").strip()
+                lower = stderr.lower()
                 if any(
-                    s in stderr
-                    for s in ("authentication", "permission denied", "could not read")
+                    s in lower
+                    for s in (
+                        "authentication",
+                        "permission denied",
+                        "could not read",
+                        "publickey",
+                        "invalid username or password",
+                    )
                 ):
                     state.fetch_result = FetchResult.AUTH_REQUIRED
                 else:
                     state.fetch_result = FetchResult.UNREACHABLE
-                state.fetch_error = res.stderr.strip() or "fetch failed"
-                warnings.append(f"fetch from '{remote}' failed")
+                # Redact any credentials and surface git's actual first line, so a
+                # failure says *why* (auth, host key, DNS) instead of just "failed".
+                detail = redact_url(stderr) or ""
+                state.fetch_error = detail or "fetch failed"
+                first_line = detail.splitlines()[0].strip() if detail else "fetch failed"
+                warnings.append(f"fetch from '{remote}' failed: {first_line}")
 
         # Relationship is only trustworthy when we have an upstream AND, if the
         # remote is unreachable, we must not present stale numbers as current.
