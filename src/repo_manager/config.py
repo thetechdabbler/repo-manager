@@ -121,11 +121,34 @@ def set_active_project(name: str) -> None:
     path.write_text(tomlkit.dumps(doc), encoding="utf-8")
 
 
+def clear_active_project() -> None:
+    """Remove the active-project pointer, if set. Leaves other global settings."""
+    path = global_config_path()
+    if not path.is_file():
+        return
+    doc = tomlkit.parse(path.read_text(encoding="utf-8"))
+    if "active_project" in doc:
+        del doc["active_project"]
+        path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+
+
 def list_profiles() -> list[str]:
     pdir = projects_dir()
     if not pdir.is_dir():
         return []
     return sorted(p.stem for p in pdir.glob("*.toml"))
+
+
+def delete_profile(name: str) -> Path:
+    """Delete a profile's config file. Touches no repository or workspace data.
+
+    Returns the removed path. Raises ConfigError if the profile does not exist.
+    """
+    path = profile_path(name)
+    if not path.is_file():
+        raise ConfigError(f"no profile named '{name}' at {path}")
+    path.unlink()
+    return path
 
 
 # -- load ---------------------------------------------------------------------------

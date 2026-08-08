@@ -26,6 +26,19 @@ repo-manager checkout [OPTIONS]
 | `--json` | Emit JSON instead of a table. |
 | `--help` | Show this message and exit. |
 
+### `forget`
+
+Remove a saved profile. Deletes only its config file, never any repository.
+
+```
+repo-manager forget [OPTIONS] {name}
+```
+
+| Option | Description |
+| --- | --- |
+| `--yes`, `-y` | Skip the confirmation prompt. |
+| `--help` | Show this message and exit. |
+
 ### `help`
 
 Show a quick manual with commands, states, and examples.

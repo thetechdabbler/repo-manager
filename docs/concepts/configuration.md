@@ -74,6 +74,18 @@ recorded so you can tell a proven default from a heuristic:
 5. Otherwise `ambiguous`, which shows as `default-branch-unknown` and requires you to
    set the value.
 
+## Removing a profile
+
+```bash
+repo-manager forget <name>
+```
+
+`forget` deletes only the profile's config file. It never touches a repository or the
+workspace on disk. It names the exact file it will remove and asks for confirmation
+(`--yes` to skip), and clears the active-project pointer if it referred to that
+profile. There is no command that deletes repositories; that is out of scope by
+design.
+
 ## Storage and overrides
 
 Profiles live under `~/.config/repo-manager/projects/`. Set `REPO_MANAGER_HOME` to
