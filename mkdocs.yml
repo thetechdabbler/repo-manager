@@ -45,18 +45,30 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+# Generated option partials are included into command pages via snippets; they are
+# not pages themselves.
+exclude_docs: |
+  reference/_generated/
+
 markdown_extensions:
   - admonition
   - attr_list
   - md_in_html
   - pymdownx.details
-  - pymdownx.superfences
   - tables
   - toc:
       permalink: true
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.snippets:
+      base_path: [docs]
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 nav:
   - Home: index.md
@@ -69,6 +81,14 @@ nav:
   - Concepts:
       - Safety model: concepts/safety-model.md
       - Configuration: concepts/configuration.md
-  - Reference:
-      - Commands: reference/commands.md
+  - Commands:
+      - Overview: reference/index.md
+      - init: reference/init.md
+      - status: reference/status.md
+      - update: reference/update.md
+      - switch-default: reference/switch-default.md
+      - checkout: reference/checkout.md
+      - summary: reference/summary.md
+      - forget: reference/forget.md
+      - Utility commands: reference/utility.md
   - Contributing: contributing.md

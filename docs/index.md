@@ -8,7 +8,7 @@ of independent Git repos. Only clean, fast-forwardable repos ever change, and ev
 skip tells you why.
 
 [Get started](installation.md){ .md-button .md-button--primary }
-[Command reference](reference/commands.md){ .md-button }
+[Command reference](reference/index.md){ .md-button }
 </div>
 
 <div class="grid cards" markdown>
@@ -45,7 +45,7 @@ skip tells you why.
     A full reference generated from the CLI itself, so it can never drift from the
     tool.
 
-    [:octicons-arrow-right-24: Command reference](reference/commands.md)
+    [:octicons-arrow-right-24: Command reference](reference/index.md)
 
 </div>
 

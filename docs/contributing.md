@@ -22,10 +22,14 @@ state or change a classification, update the matrix first; it is the specificati
 
 ## Generated docs
 
-Two pages are generated from the code and must not be edited by hand:
+Some docs are generated from the code and must not be edited by hand:
 
-- `docs/reference/commands.md` from the CLI definitions
-- `docs/concepts/safety-model.md` from the state enum and the policy functions
+- `docs/reference/_generated/*.md`, the per-command synopsis and option tables,
+  embedded into the command pages via snippets
+- `docs/concepts/safety-model.md`, from the state enum and the policy functions
+
+The hand-written command pages under `docs/reference/` (narrative, diagrams, examples)
+are authored; only the embedded `_generated` partials come from the CLI.
 
 Regenerate and validate them with:
 
