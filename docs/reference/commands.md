@@ -86,6 +86,26 @@ repo-manager status [OPTIONS]
 | `--json` | Emit JSON instead of a table. |
 | `--help` | Show this message and exit. |
 
+### `summary`
+
+Summarize commits across repositories since a date. Read-only.
+
+```
+repo-manager summary [OPTIONS]
+```
+
+| Option | Description |
+| --- | --- |
+| `--since` | Window: 7d, 2w, 24h, an ISO date, or 'yesterday'. (default: `7d`) |
+| `--project` | Profile name; defaults to active. |
+| `--group` | Limit to a repository group. |
+| `--repo` | Limit to one repository. |
+| `--select` | Selection expression. |
+| `--markdown` | Write a Markdown report to this path. |
+| `--jobs` | Parallel workers. |
+| `--json` | Emit JSON instead of a table. |
+| `--help` | Show this message and exit. |
+
 ### `switch-default`
 
 Switch each eligible repository to its default branch and fast-forward it.

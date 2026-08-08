@@ -259,6 +259,34 @@ def test_checkout_default_across_repos(home, mutws):
     assert GitBackend().current_branch(cur) == "main"
 
 
+def test_summary_json_over_workspace(home, mutws):
+    _init(mutws.workspace)
+    from conftest import commit_file
+
+    commit_file(mutws.workspace / "clean-current", "z.py", "1\n", "feat: new AB-1")
+    result = runner.invoke(app, ["summary", "--since", "2025-12-01", "--json"])
+    assert result.exit_code == 0, result.stdout + result.stderr
+    data = json.loads(result.stdout)
+    assert data["since"] == "2025-12-01"
+    assert data["totals"]["total_commits"] >= 1
+    # A window after the fixed fixture date finds nothing.
+    narrow = runner.invoke(app, ["summary", "--since", "2026-06-01", "--json"])
+    assert json.loads(narrow.stdout)["totals"]["total_commits"] == 0
+
+
+def test_summary_writes_markdown_file(home, mutws, tmp_path):
+    _init(mutws.workspace)
+    out = tmp_path / "report.md"
+    result = runner.invoke(
+        app, ["summary", "--since", "2025-12-01", "--markdown", str(out)]
+    )
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert out.exists()
+    text = out.read_text()
+    assert text.startswith("# Change summary:")
+    assert "commits" in text
+
+
 def test_status_fetch_flags_unreachable(home, tmp_path, builder):
     """A repo with a broken remote reports remote-unavailable under --fetch."""
     repo = builder.build_unreachable_remote()

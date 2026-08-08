@@ -394,3 +394,104 @@ class StatusReport:
             key = _enum_value(r.classification)
             counts[key] = counts.get(key, 0) + 1
         return dict(sorted(counts.items()))
+
+
+# -- summaries ----------------------------------------------------------------------
+
+
+@dataclass
+class CommitSummary:
+    sha: str
+    short_sha: str
+    author: str
+    date: str  # committer date, ISO-8601
+    subject: str
+    insertions: int = 0
+    deletions: int = 0
+    files_changed: int = 0
+    commit_type: str | None = None  # conventional-commit type, e.g. "feat"
+    references: list[str] = field(default_factory=list)  # ticket keys, e.g. ABC-123
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "sha": self.sha,
+            "short_sha": self.short_sha,
+            "author": self.author,
+            "date": self.date,
+            "subject": self.subject,
+            "insertions": self.insertions,
+            "deletions": self.deletions,
+            "files_changed": self.files_changed,
+            "commit_type": self.commit_type,
+            "references": list(self.references),
+        }
+
+
+@dataclass
+class RepositorySummary:
+    name: str
+    relative_path: str
+    branch: str | None  # current branch, or None if detached
+    requested_since: str
+    resolved_since: str
+    commits: list[CommitSummary] = field(default_factory=list)
+    total_insertions: int = 0
+    total_deletions: int = 0
+    files_changed: int = 0
+    top_directories: list[str] = field(default_factory=list)
+    references: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def commit_count(self) -> int:
+        return len(self.commits)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "relative_path": self.relative_path,
+            "branch": self.branch,
+            "requested_since": self.requested_since,
+            "resolved_since": self.resolved_since,
+            "commit_count": self.commit_count,
+            "total_insertions": self.total_insertions,
+            "total_deletions": self.total_deletions,
+            "files_changed": self.files_changed,
+            "top_directories": list(self.top_directories),
+            "references": list(self.references),
+            "commits": [c.to_dict() for c in self.commits],
+            "warnings": list(self.warnings),
+        }
+
+
+@dataclass
+class SummaryReport:
+    """The complete result of one `summary` invocation. Read-only."""
+
+    generated_at: str
+    project_name: str
+    project_root: str
+    since: str
+    repositories: list[RepositorySummary] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    schema_version: int = SCHEMA_VERSION
+
+    def totals(self) -> dict[str, int]:
+        active = [r for r in self.repositories if r.commit_count]
+        return {
+            "repositories_with_changes": len(active),
+            "total_commits": sum(r.commit_count for r in self.repositories),
+            "total_insertions": sum(r.total_insertions for r in self.repositories),
+            "total_deletions": sum(r.total_deletions for r in self.repositories),
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "project": {"name": self.project_name, "root": self.project_root},
+            "since": self.since,
+            "totals": self.totals(),
+            "repositories": [r.to_dict() for r in self.repositories],
+            "warnings": list(self.warnings),
+        }

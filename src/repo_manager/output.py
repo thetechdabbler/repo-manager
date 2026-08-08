@@ -195,3 +195,121 @@ def render_plan_table(report: OperationReport, console: Console | None = None) -
             console.print(f"  Error:  {r.error}", highlight=False)
         if r.next_action:
             console.print(f"  Next:   {r.next_action}", highlight=False)
+
+
+# -- summary rendering --------------------------------------------------------------
+
+from .models import SummaryReport  # noqa: E402
+
+
+def render_summary_json(report: SummaryReport) -> str:
+    return json.dumps(report.to_dict(), indent=2)
+
+
+def render_summary_table(report: SummaryReport, console: Console | None = None) -> None:
+    console = console or Console()
+    console.print(
+        Text(
+            f"repo-manager · summary · {report.project_name} · since {report.since}",
+            style="bold",
+        )
+    )
+
+    table = Table(header_style="bold")
+    table.add_column("Repository", overflow="fold")
+    table.add_column("Branch")
+    table.add_column("Commits", justify="right")
+    table.add_column("+/-", justify="right")
+    table.add_column("Files", justify="right")
+    table.add_column("Top dirs", overflow="fold")
+
+    for r in report.repositories:
+        style = "" if r.commit_count else "dim"
+        churn = f"[green]+{r.total_insertions}[/green]/[red]-{r.total_deletions}[/red]"
+        table.add_row(
+            Text(r.relative_path, style=style),
+            r.branch or "detached",
+            str(r.commit_count),
+            churn if r.commit_count else "-",
+            str(r.files_changed) if r.commit_count else "-",
+            ", ".join(r.top_directories[:4]),
+        )
+    console.print(table)
+
+    t = report.totals()
+    console.print(
+        Text(
+            f"{t['total_commits']} commits across "
+            f"{t['repositories_with_changes']} repositories  "
+            f"(+{t['total_insertions']} / -{t['total_deletions']})",
+            style="dim",
+        )
+    )
+
+    # Per-repository commit detail, only for repos with activity.
+    for r in report.repositories:
+        if not r.commit_count:
+            continue
+        console.print()
+        header = f"{r.relative_path} ({r.branch or 'detached'})"
+        if r.references:
+            header += f"  refs: {', '.join(r.references)}"
+        console.print(Text(header, style="bold"))
+        for c in r.commits:
+            day = c.date[:10]
+            console.print(
+                f"  {c.short_sha}  {day}  {c.subject}  "
+                f"[green]+{c.insertions}[/green]/[red]-{c.deletions}[/red]",
+                highlight=False,
+            )
+        for w in r.warnings:
+            console.print(f"  [yellow]! {w}[/yellow]", highlight=False)
+
+
+def render_summary_markdown(report: SummaryReport) -> str:
+    """A handoff-ready Markdown report, from the same structure."""
+    t = report.totals()
+    lines: list[str] = [
+        f"# Change summary: {report.project_name}",
+        "",
+        f"_Since {report.since}, generated {report.generated_at}._",
+        "",
+        f"**{t['total_commits']} commits** across "
+        f"**{t['repositories_with_changes']}** repositories "
+        f"(+{t['total_insertions']} / -{t['total_deletions']}).",
+        "",
+    ]
+
+    active = [r for r in report.repositories if r.commit_count]
+    quiet = [r for r in report.repositories if not r.commit_count]
+
+    for r in active:
+        lines.append(f"## {r.relative_path} ({r.branch or 'detached'})")
+        lines.append("")
+        meta = (
+            f"{r.commit_count} commits, +{r.total_insertions} / "
+            f"-{r.total_deletions}, {r.files_changed} files"
+        )
+        if r.top_directories:
+            meta += f". Areas: {', '.join(r.top_directories[:6])}"
+        lines.append(meta)
+        if r.references:
+            lines.append("")
+            lines.append(f"References: {', '.join(r.references)}")
+        lines.append("")
+        for c in r.commits:
+            lines.append(
+                f"- `{c.short_sha}` {c.subject} "
+                f"(+{c.insertions}/-{c.deletions}, {c.author}, {c.date[:10]})"
+            )
+        lines.append("")
+        for w in r.warnings:
+            lines.append(f"> warning: {w}")
+            lines.append("")
+
+    if quiet:
+        names = ", ".join(r.relative_path for r in quiet)
+        lines.append(f"_No changes in: {names}._")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"

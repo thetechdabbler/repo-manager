@@ -34,8 +34,12 @@ from .output import (
     render_plan_table,
     render_status_json,
     render_status_table,
+    render_summary_json,
+    render_summary_markdown,
+    render_summary_table,
 )
 from .repository_service import RepoSpec, RepositoryService
+from .summaries import SummaryService
 
 app = typer.Typer(
     add_completion=False,
@@ -157,6 +161,37 @@ def selection_matches(snap, expr: str | None) -> bool:
     if not expr:
         return True
     return any(_token_matches(snap, tok) for tok in expr.split(","))
+
+
+def _summary_token_matches(rs, token: str) -> bool:
+    token = token.strip()
+    if not token:
+        return False
+    low = token.lower()
+    if low == "all":
+        return True
+    if low == "changed":
+        return rs.commit_count > 0
+    if low == "quiet":
+        return rs.commit_count == 0
+    if ":" in token:
+        kind, _, value = token.partition(":")
+        if kind.lower() == "search":
+            return value.lower() in f"{rs.name} {rs.relative_path}".lower()
+        if kind.lower() == "name":
+            return rs.name == value
+        return False
+    return rs.name == token or rs.relative_path == token
+
+
+def selection_matches_summary(rs, expr: str | None) -> bool:
+    """Selection for summaries. Supports all/changed/quiet/name:/search:/<bare>.
+
+    Group filtering happens earlier via --group, since a summary row carries no
+    group membership."""
+    if not expr:
+        return True
+    return any(_summary_token_matches(rs, tok) for tok in expr.split(","))
 
 
 # -- commands ------------------------------------------------------------------------
@@ -558,6 +593,59 @@ def checkout(
 
 
 @app.command()
+def summary(
+    since: str = typer.Option(
+        "7d", "--since", help="Window: 7d, 2w, 24h, an ISO date, or 'yesterday'."
+    ),
+    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    select: Optional[str] = typer.Option(None, help="Selection expression."),
+    markdown: Optional[Path] = typer.Option(
+        None, "--markdown", help="Write a Markdown report to this path."
+    ),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Summarize commits across repositories since a date. Read-only."""
+    profile = _resolve_profile(project)
+    selected = _select(profile, group, repo)
+    specs = _specs(profile, selected)
+
+    missing = [s for s in specs if not (s.absolute_path / ".git").exists()]
+    live = [s for s in specs if s not in missing]
+    if not live:
+        raise _fail("no repositories to summarize", EXIT_USAGE)
+
+    worker_count = jobs or profile.policy.jobs
+    service = SummaryService(backend=GitBackend(), jobs=worker_count)
+    report = service.build(
+        live, since, project_name=profile.name, project_root=str(profile.root)
+    )
+    for s in missing:
+        report.warnings.append(f"{s.relative_path}: not a git worktree on disk")
+
+    if select:
+        report.repositories = [
+            r for r in report.repositories if selection_matches_summary(r, select)
+        ]
+
+    if markdown is not None:
+        markdown.write_text(render_summary_markdown(report), encoding="utf-8")
+        console.print(f"Wrote Markdown report to {markdown}", highlight=False)
+
+    if json_out:
+        console.print_json(render_summary_json(report))
+    elif markdown is None:
+        render_summary_table(report, console)
+
+    for w in report.warnings:
+        err_console.print(f"[yellow]![/yellow] {w}", highlight=False)
+
+    raise typer.Exit(EXIT_FAILURE if missing else EXIT_OK)
+
+
+@app.command()
 def profiles() -> None:
     """List known profiles and mark the active one."""
     active = config.load_active_project()
@@ -591,6 +679,7 @@ _MANUAL = """\
   update          Fast-forward the current branch of eligible repos. Never switches.
   switch-default  Switch each eligible repo to its default branch and fast-forward.
   checkout        Check out a branch across repos, creating tracking branches as needed.
+  summary         Summarize commits across repos since a date (read-only).
   profiles        List known profiles.
   version         Print the version.
   help            Show this manual.
@@ -602,6 +691,8 @@ _MANUAL = """\
   --select EXPR   Filter by expression: all, clean, dirty, ready, ahead,
                   group:NAME, search:TEXT, name:NAME (comma-separated union).
   --fetch         Fetch before computing ahead/behind (status only).
+  --since W       Summary window: 7d, 2w, 24h, an ISO date, or 'yesterday'.
+  --markdown P    Write a Markdown summary to path P (summary only).
   --stash-and-update  Dirty repos: stash, fast-forward, restore (update/switch-default).
   --dry-run       Preview a mutation; make no changes.
   --yes / -y      Skip the confirmation prompt (required non-interactively).
@@ -641,6 +732,7 @@ possibly-stale numbers. Stale remote refs are never presented as current state.[
   repo-manager update --group backend --yes
   repo-manager switch-default --select clean --dry-run
   repo-manager checkout --branch default --repo api
+  repo-manager summary --since 7d --markdown standup.md
 
 Run [bold]repo-manager <command> --help[/bold] for the full option list of any command.
 """
