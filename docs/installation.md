@@ -8,16 +8,30 @@
 ## Install
 
 The tool is a standalone CLI, best installed globally with
-[pipx](https://pipx.pypa.io/) so it stays isolated from your project environments:
+[pipx](https://pipx.pypa.io/) so it stays isolated from your project environments.
+
+It is installed directly from the Git repository:
 
 ```bash
-pipx install repo-manager
+pipx install "git+https://github.com/thetechdabbler/repo-manager.git"
 ```
 
-To upgrade later:
+To upgrade later (pipx re-pulls from the same source):
 
 ```bash
 pipx upgrade repo-manager
+```
+
+!!! warning "Not on PyPI"
+    `repo-manager` is not published to the Python Package Index. Running
+    `pipx install repo-manager` would fetch an unrelated, abandoned project of the
+    same name and fail to build. Always install from the Git URL above.
+
+To install a specific branch, or a local clone you are developing against:
+
+```bash
+pipx install "git+https://github.com/thetechdabbler/repo-manager.git@<branch>"
+pipx install /path/to/repo-manager
 ```
 
 ## Verify
