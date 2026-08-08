@@ -16,21 +16,24 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-# Config neutralized on every call so a developer's global settings, hooks, or
-# credential helpers cannot change behavior or introduce a hang.
+# Applied on every call. We disable hooks (a hook could hang or mutate) and turn off
+# *interactive* credential prompting, but we deliberately leave the user's credential
+# helper in place: keychain and token helpers are non-interactive and are how HTTPS
+# remotes authenticate. Disabling them broke fetches that rely on stored credentials.
 _BASE_FLAGS = [
     "-c", "core.hooksPath=/dev/null",
-    "-c", "credential.helper=",
     "-c", "credential.interactive=never",
     "-c", "advice.detachedHead=false",
     "-c", "protocol.file.allow=always",
 ]
 
+# Network calls must never hang waiting for input, but must still be able to
+# authenticate non-interactively. GIT_TERMINAL_PROMPT=0 stops the username/password
+# prompt; SSH BatchMode stops the passphrase/host-key prompt (a key already loaded in
+# ssh-agent still works). We do NOT clear GIT_ASKPASS/SSH_ASKPASS: an empty value can
+# itself break auth, and the settings above already prevent an interactive hang.
 _NETWORK_ENV = {
     "GIT_TERMINAL_PROMPT": "0",
-    "GIT_ASKPASS": "",
-    "SSH_ASKPASS": "",
-    # BatchMode makes SSH fail instead of prompting for a passphrase/host key.
     "GIT_SSH_COMMAND": "ssh -oBatchMode=yes -oStrictHostKeyChecking=accept-new",
 }
 

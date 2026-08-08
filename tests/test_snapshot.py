@@ -100,6 +100,19 @@ def test_unreachable_never_reports_current_data(snapshots):
     assert snap.remote.behind_count is None
 
 
+def test_fetch_failure_surfaces_git_error(builder: WorkspaceBuilder):
+    """A failed fetch must report git's actual reason, not a generic 'failed'."""
+    repo = builder.build_unreachable_remote()
+    service = RepositoryService(jobs=1)
+    snap = service.snapshot_one(_spec("unreachable-remote", repo), fetch=True)
+
+    assert snap.remote.fetch_attempted is True
+    assert snap.remote.fetch_error and snap.remote.fetch_error != "fetch failed"
+    # The warning carries the specific reason after the colon.
+    warning = next(w for w in snap.warnings if "fetch from 'origin' failed" in w)
+    assert ": " in warning and len(warning.split(": ", 1)[1].strip()) > 0
+
+
 def test_default_branch_override_beats_inference(builder: WorkspaceBuilder):
     """A profile override is the top-priority evidence source."""
     repo = builder.build_clean_current()
