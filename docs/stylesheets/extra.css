@@ -1,0 +1,270 @@
+/* Ink & indigo: a near-monochrome base with a single restrained indigo accent.
+   Layout, spacing, and type refinements sit on top of Material for MkDocs. */
+
+/* ---- palette ---------------------------------------------------------------- */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #ffffff;          /* header / tab bar background */
+  --md-primary-fg-color--light: #ffffff;
+  --md-primary-fg-color--dark: #f4f4f6;
+  --md-primary-bg-color: #16171b;          /* text / icons on the header */
+  --md-primary-bg-color--light: #5b5e66;
+
+  --md-accent-fg-color: #4f46e5;
+  --md-accent-fg-color--transparent: rgba(79, 70, 229, 0.10);
+  --md-typeset-a-color: #4f46e5;
+
+  --md-default-fg-color: #1c1d22;
+  --md-default-fg-color--light: #43454d;
+  --md-default-fg-color--lighter: #8a8d96;
+  --md-default-bg-color: #ffffff;
+
+  --md-code-bg-color: #f6f7f9;
+  --md-code-fg-color: #24262c;
+
+  --rm-border: #ececf1;
+  --rm-muted: #6b6e78;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-hue: 232;
+  --md-primary-fg-color: #0d0e13;
+  --md-primary-bg-color: #e7e8ec;
+  --md-primary-bg-color--light: #a9abb4;
+
+  --md-accent-fg-color: #a5b4fc;
+  --md-accent-fg-color--transparent: rgba(129, 140, 248, 0.14);
+  --md-typeset-a-color: #a5b4fc;
+
+  --md-default-fg-color: #d7d9e0;
+  --md-default-fg-color--light: #a7aab4;
+  --md-default-fg-color--lighter: #71747f;
+  --md-default-bg-color: #0b0c10;
+
+  --md-code-bg-color: #14161c;
+  --md-code-fg-color: #d5d8e0;
+
+  --rm-border: #22242c;
+  --rm-muted: #9498a3;
+}
+
+/* ---- typography ------------------------------------------------------------- */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.md-typeset {
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+.md-typeset h1 {
+  font-size: 1.85rem;
+  margin-bottom: 0.4em;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset h2 {
+  font-size: 1.3rem;
+  margin-top: 2.2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.md-typeset h3 { font-size: 1.02rem; }
+
+.md-typeset code { font-size: 0.82em; }
+
+/* ---- header / nav ----------------------------------------------------------- */
+
+.md-header {
+  box-shadow: none;
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.md-tabs {
+  border-bottom: 1px solid var(--rm-border);
+}
+
+.md-tabs__link {
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  opacity: 1;
+}
+
+.md-nav {
+  font-size: 0.72rem;
+}
+
+.md-nav__title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--rm-muted);
+}
+
+/* Active page marker in the left nav. */
+.md-nav__link--active {
+  font-weight: 600;
+}
+
+/* ---- content width & rhythm ------------------------------------------------- */
+
+.md-grid { max-width: 66rem; }
+
+.md-content__inner { margin-bottom: 3rem; }
+
+.md-typeset a { text-underline-offset: 0.18em; }
+
+/* ---- code ------------------------------------------------------------------- */
+
+.md-typeset pre > code {
+  border-radius: 10px;
+  border: 1px solid var(--rm-border);
+}
+
+.md-typeset .highlight + .highlight { margin-top: 0.6em; }
+
+.md-clipboard { color: var(--md-default-fg-color--lighter); }
+
+/* ---- tables ----------------------------------------------------------------- */
+
+.md-typeset table:not([class]) {
+  border: 1px solid var(--rm-border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.74rem;
+}
+
+.md-typeset table:not([class]) th {
+  font-weight: 600;
+  background: var(--md-code-bg-color);
+}
+
+.md-typeset table:not([class]) td {
+  border-top: 1px solid var(--rm-border);
+}
+
+/* ---- admonitions ------------------------------------------------------------ */
+
+.md-typeset .admonition,
+.md-typeset details {
+  border: 1px solid var(--rm-border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.74rem;
+}
+
+/* ---- buttons ---------------------------------------------------------------- */
+
+.md-typeset .md-button {
+  border-radius: 8px;
+  border-width: 1px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  padding: 0.45em 1.1em;
+  transition: transform 0.06s ease, background-color 0.15s ease;
+}
+
+.md-typeset .md-button--primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+/* Secondary button: visible in both themes, indigo on hover. */
+.md-typeset .md-button:not(.md-button--primary) {
+  border-color: var(--rm-border);
+  color: var(--md-default-fg-color);
+  background: transparent;
+}
+
+.md-typeset .md-button:not(.md-button--primary):hover {
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-accent-fg-color);
+  background: var(--md-accent-fg-color--transparent);
+}
+
+.md-typeset .md-button--primary:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #ffffff;
+}
+
+.md-typeset .md-button:hover { transform: translateY(-1px); }
+
+/* ---- grid cards ------------------------------------------------------------- */
+
+.md-typeset .grid.cards > ul > li {
+  border: 1px solid var(--rm-border);
+  border-radius: 12px;
+  padding: 1.1rem 1.15rem;
+  transition: border-color 0.15s ease, transform 0.08s ease;
+}
+
+.md-typeset .grid.cards > ul > li:hover {
+  border-color: var(--md-accent-fg-color);
+  transform: translateY(-2px);
+}
+
+.md-typeset .grid.cards .twemoji svg,
+.md-typeset .grid.cards .lg svg {
+  fill: var(--md-accent-fg-color);
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+/* ---- hero (home page) ------------------------------------------------------- */
+
+.rm-hero {
+  padding: 2.6rem 0 1.4rem;
+  border-bottom: 1px solid var(--rm-border);
+  margin-bottom: 2.2rem;
+}
+
+.rm-hero .rm-eyebrow {
+  display: inline-block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--md-accent-fg-color);
+  margin-bottom: 0.7rem;
+}
+
+.rm-hero h1 {
+  font-size: 2.6rem;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.5rem;
+}
+
+.rm-hero p {
+  font-size: 0.95rem;
+  color: var(--rm-muted);
+  max-width: 38rem;
+  margin: 0 0 1.5rem;
+}
+
+.rm-hero .md-button + .md-button { margin-left: 0.5rem; }
+
+/* ---- footer ----------------------------------------------------------------- */
+
+.md-footer { background: var(--md-default-bg-color); }
+.md-footer-meta { background: transparent; border-top: 1px solid var(--rm-border); }
+.md-footer__inner { border-top: 1px solid var(--rm-border); }
+.md-copyright, .md-footer__link { color: var(--rm-muted); }

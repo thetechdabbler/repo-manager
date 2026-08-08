@@ -1,17 +1,53 @@
+<div class="rm-hero" markdown>
+<span class="rm-eyebrow">Multi-repo git, safely</span>
+
 # repo-manager
 
-A command-line utility for working safely with a directory tree that contains many
-independent Git repositories: service fleets, microservice checkouts, umbrella
-workspaces. No submodules, no monorepo, no particular Git host, and no prescribed
-layout required.
+One workspace, many repositories, no surprises. Inspect, update, and summarize a tree
+of independent Git repos. Only clean, fast-forwardable repos ever change, and every
+skip tells you why.
 
-It answers three questions and performs two mutations:
+[Get started](installation.md){ .md-button .md-button--primary }
+[Command reference](reference/commands.md){ .md-button }
+</div>
 
-- Which repositories are present, on what branch, in what state, and which have local work?
-- Which repositories can be updated safely right now, and why can the rest not?
-- What changed across the workspace in the last N days?
-- Update the safe repositories on their current branch.
-- Return the safe repositories to their default branch.
+<div class="grid cards" markdown>
+
+-   :material-download:{ .lg .middle } __Install in seconds__
+
+    ---
+
+    One `pipx` command from Git. Python 3.11+ and nothing else to configure.
+
+    [:octicons-arrow-right-24: Installation](installation.md)
+
+-   :material-eye-outline:{ .lg .middle } __See everything at once__
+
+    ---
+
+    Branch, state, and local work across every repository in a single table.
+
+    [:octicons-arrow-right-24: Daily status](guides/daily-status.md)
+
+-   :material-shield-check-outline:{ .lg .middle } __Safe by default__
+
+    ---
+
+    Only clean, tracking, fast-forwardable repos change. Every skip states a reason
+    and a next action.
+
+    [:octicons-arrow-right-24: Safety model](concepts/safety-model.md)
+
+-   :material-console-line:{ .lg .middle } __Every command, documented__
+
+    ---
+
+    A full reference generated from the CLI itself, so it can never drift from the
+    tool.
+
+    [:octicons-arrow-right-24: Command reference](reference/commands.md)
+
+</div>
 
 ## The mental model
 
