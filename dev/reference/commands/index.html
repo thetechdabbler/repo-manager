@@ -886,6 +886,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#forget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        forget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1058,6 +1069,17 @@
     <span class="md-ellipsis">
       
         checkout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        forget
       
     </span>
   </a>
@@ -1238,6 +1260,28 @@
 <tr>
 <td><code>--json</code></td>
 <td>Emit JSON instead of a table.</td>
+</tr>
+<tr>
+<td><code>--help</code></td>
+<td>Show this message and exit.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="forget"><code>forget</code><a class="headerlink" href="#forget" title="Permanent link">&para;</a></h3>
+<p>Remove a saved profile. Deletes only its config file, never any repository.</p>
+<div class="highlight"><pre><span></span><code>repo-manager forget [OPTIONS] {name}
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--yes</code>, <code>-y</code></td>
+<td>Skip the confirmation prompt.</td>
 </tr>
 <tr>
 <td><code>--help</code></td>

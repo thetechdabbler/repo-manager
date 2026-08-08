@@ -834,6 +834,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#removing-a-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#storage-and-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1055,6 +1066,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#removing-a-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removing a profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#storage-and-overrides" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1147,6 +1169,14 @@ recorded so you can tell a proven default from a heuristic:</p>
 <li>Otherwise <code>ambiguous</code>, which shows as <code>default-branch-unknown</code> and requires you to
    set the value.</li>
 </ol>
+<h2 id="removing-a-profile">Removing a profile<a class="headerlink" href="#removing-a-profile" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>forget<span class="w"> </span>&lt;name&gt;
+</code></pre></div>
+<p><code>forget</code> deletes only the profile's config file. It never touches a repository or the
+workspace on disk. It names the exact file it will remove and asks for confirmation
+(<code>--yes</code> to skip), and clears the active-project pointer if it referred to that
+profile. There is no command that deletes repositories; that is out of scope by
+design.</p>
 <h2 id="storage-and-overrides">Storage and overrides<a class="headerlink" href="#storage-and-overrides" title="Permanent link">&para;</a></h2>
 <p>Profiles live under <code>~/.config/repo-manager/projects/</code>. Set <code>REPO_MANAGER_HOME</code> to
 relocate that directory.</p>
