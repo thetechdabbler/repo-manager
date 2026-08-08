@@ -659,6 +659,48 @@ def profiles() -> None:
 
 
 @app.command()
+def forget(
+    name: str = typer.Argument(..., help="Profile to remove."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
+) -> None:
+    """Remove a saved profile. Deletes only its config file, never any repository."""
+    path = config.profile_path(name)
+    if not path.is_file():
+        available = config.list_profiles()
+        hint = f" Known profiles: {', '.join(available)}." if available else ""
+        raise _fail(f"no profile named '{name}'.{hint}")
+
+    # Load for display, but still allow removing an unloadable/corrupt profile.
+    try:
+        profile = config.load_profile(name)
+        root_line = str(profile.root)
+    except ConfigError:
+        root_line = None
+
+    console.print("This removes the profile config only. No repository is touched.")
+    console.print(f"  Profile: {name}")
+    console.print(f"  File:    {path}")
+    if root_line:
+        console.print(f"  Workspace (left untouched): {root_line}")
+
+    if not yes:
+        if not sys.stdin.isatty():
+            raise _fail(
+                "refusing to remove a profile non-interactively without --yes",
+                EXIT_USAGE,
+            )
+        if not Confirm.ask(f"Remove profile '{name}'?", default=False):
+            raise typer.Exit(EXIT_OK)
+
+    active = config.load_active_project()
+    config.delete_profile(name)
+    if active == name:
+        config.clear_active_project()
+        console.print(f"Cleared the active project (was '{name}').")
+    console.print(f"[green]Removed[/green] profile '{name}'.", highlight=False)
+
+
+@app.command()
 def version() -> None:
     """Print the version."""
     console.print(__version__)
@@ -681,6 +723,7 @@ _MANUAL = """\
   checkout        Check out a branch across repos, creating tracking branches as needed.
   summary         Summarize commits across repos since a date (read-only).
   profiles        List known profiles.
+  forget          Remove a saved profile (config only; never a repository).
   version         Print the version.
   help            Show this manual.
 

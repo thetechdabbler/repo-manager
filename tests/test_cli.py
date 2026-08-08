@@ -120,6 +120,44 @@ def test_init_on_empty_dir_fails(home, tmp_path):
     assert "no git repositories" in result.stderr.lower()
 
 
+def test_forget_removes_profile_and_clears_active(home, workspace):
+    runner.invoke(app, ["init", str(workspace), "--name", "fixture", "--yes"])
+    assert config.profile_path("fixture").exists()
+    assert config.load_active_project() == "fixture"
+
+    result = runner.invoke(app, ["forget", "fixture", "--yes"])
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert not config.profile_path("fixture").exists()
+    assert config.load_active_project() is None
+    # The workspace on disk is untouched.
+    assert (workspace / "clean-current").is_dir()
+
+
+def test_forget_unknown_profile_errors(home):
+    result = runner.invoke(app, ["forget", "nope", "--yes"])
+    assert result.exit_code == 2
+    assert "no profile named" in result.stderr.lower()
+
+
+def test_forget_requires_yes_non_interactively(home, workspace):
+    runner.invoke(app, ["init", str(workspace), "--name", "fixture", "--yes"])
+    result = runner.invoke(app, ["forget", "fixture"])
+    assert result.exit_code == 2
+    assert "--yes" in result.stderr
+    # Nothing removed.
+    assert config.profile_path("fixture").exists()
+
+
+def test_forget_keeps_other_active_pointer(home, workspace, tmp_path):
+    runner.invoke(app, ["init", str(workspace), "--name", "one", "--yes"])
+    runner.invoke(app, ["init", str(workspace), "--name", "two", "--yes"])
+    # 'two' is active (last init). Forgetting 'one' must not clear it.
+    assert config.load_active_project() == "two"
+    result = runner.invoke(app, ["forget", "one", "--yes"])
+    assert result.exit_code == 0, result.stderr
+    assert config.load_active_project() == "two"
+
+
 def test_profiles_command_lists_and_marks_active(home, workspace):
     runner.invoke(app, ["init", str(workspace), "--name", "fixture", "--yes"])
     result = runner.invoke(app, ["profiles"])

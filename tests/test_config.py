@@ -124,3 +124,34 @@ def test_active_project_roundtrip(tmp_path, monkeypatch):
     # Setting a second time preserves the file structure.
     config.set_active_project("other")
     assert config.load_active_project() == "other"
+
+
+def test_delete_profile_removes_only_the_config(tmp_path, monkeypatch):
+    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    (tmp_path / "svc" / "api").mkdir(parents=True)
+    config.save_profile(_profile(tmp_path))
+    path = config.profile_path("demo")
+    assert path.is_file()
+
+    removed = config.delete_profile("demo")
+    assert removed == path
+    assert not path.exists()
+    assert "demo" not in config.list_profiles()
+    # The workspace itself is untouched.
+    assert (tmp_path / "svc" / "api").is_dir()
+
+
+def test_delete_missing_profile_raises(tmp_path, monkeypatch):
+    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    with pytest.raises(ConfigError, match="no profile named"):
+        config.delete_profile("ghost")
+
+
+def test_clear_active_project(tmp_path, monkeypatch):
+    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    config.set_active_project("demo")
+    assert config.load_active_project() == "demo"
+    config.clear_active_project()
+    assert config.load_active_project() is None
+    # Idempotent even when nothing is set.
+    config.clear_active_project()
