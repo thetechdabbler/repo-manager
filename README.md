@@ -1,4 +1,4 @@
-# repo-manager
+# repo
 
 A command-line utility for working safely with a directory tree that contains many
 independent Git repositories.
