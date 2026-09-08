@@ -2,6 +2,21 @@
 
 `status` is the command you run most. It is read-only.
 
+There are two status views:
+
+```bash
+# All saved projects, local-only counts, no fetch.
+repo status
+
+# Detailed child-repository status for one project.
+repo core status
+```
+
+The global view reports the project root, total child repositories, clean count, dirty
+count, in-progress count, and missing-worktree count. It does not fetch. The detailed
+view reports each saved repository name, relative path, current branch, state, local
+changes, and commit information.
+
 ```bash
 repo <project> status
 ```
@@ -41,6 +56,22 @@ repo <project> status --json
 The JSON is a stable, versioned structure (`schema_version`). It is the contract for
 scripts and for any tooling built on top of the CLI; the terminal table is just one
 rendering of the same report.
+
+For example, a project with one root repository and two child repositories may show:
+
+```text
+Project  Root                         Repos  Clean  Dirty  In progress  Missing
+core     /Users/mchoudhary/docker-env      3      2      1            0        0
+```
+
+The detailed view then makes the paths explicit:
+
+```text
+Name                  Path                    Branch  State
+root                  .                       main    dirty
+Entrata               Entrata                 dev     current
+LeaseManagement       LeaseManagement         main    current
+```
 
 ## Reading the columns
 

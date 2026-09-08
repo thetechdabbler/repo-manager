@@ -101,5 +101,7 @@ design.
 
 ## Storage and overrides
 
-Profiles live under `~/.config/repo-manager/projects/`. Set `REPO_MANAGER_HOME` to
-relocate that directory.
+Projects live under `~/.config/repo/projects/`. On first use, `repo` moves an existing
+`~/.config/repo-manager/` directory to `~/.config/repo/`. If both directories exist,
+the command stops and asks for manual resolution instead of merging files. Set
+`REPO_HOME` to use a different new configuration directory.

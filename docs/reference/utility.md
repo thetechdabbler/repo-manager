@@ -17,7 +17,7 @@ repo projects
 Print the installed version.
 
 ```bash
-repo-manager version
+repo version
 ```
 
 --8<-- "reference/_generated/version.md"
@@ -28,7 +28,7 @@ Print a one-screen manual: every command, the repository states, the changes-col
 legend, and the exit codes. Useful at the point of use, in the terminal.
 
 ```bash
-repo-manager help
+repo help
 ```
 
 --8<-- "reference/_generated/help.md"
