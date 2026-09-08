@@ -4,6 +4,11 @@ By default, a dirty repository is skipped by `update` and `default` so your
 local work is never touched. When you do want to update on top of local changes,
 `--stash` is the opt-in, conflict-safe path.
 
+Interactive update mode also offers `Stash local changes, then sync and restore` for
+dirty repositories. It uses the same conflict-safe stash lifecycle. The alternative
+`Discard local changes, then sync` choice requires a separate confirmation and removes
+tracked changes plus non-ignored untracked files.
+
 ```bash
 repo <project> update --stash --group backend
 repo <project> default --stash --repo api

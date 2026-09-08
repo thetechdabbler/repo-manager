@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 import repo_manager.cli as cli
 from repo_manager import config
 from repo_manager.cli import app, normalize_argv
+from repo_manager.git_backend import GitBackend
 
 runner = CliRunner()
 
@@ -289,6 +290,36 @@ def test_interactive_skip_is_success(home, mutws, monkeypatch):
 
     assert result.exit_code == 0, result.stdout + result.stderr
     assert "skipped" in result.stdout
+
+
+def test_interactive_dirty_repo_can_stash_and_sync(home, builder, monkeypatch):
+    repo = builder.build_stash_ok()
+    before = GitBackend().head_sha(repo)
+    _init(builder.workspace)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "stash-sync")
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "stash-ok"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().head_sha(repo) != before
+    assert (repo / "docs" / "notes.md").read_text() == "my local notes\n"
+    assert "stash local changes" in result.stdout.lower()
+
+
+def test_interactive_dirty_repo_can_discard_and_sync(home, builder, monkeypatch):
+    repo = builder.build_dirty()
+    _init(builder.workspace)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "discard-sync")
+    monkeypatch.setattr(cli.Confirm, "ask", lambda *args, **kwargs: True)
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "dirty"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert not (repo / "staged.txt").exists()
+    assert not (repo / "untracked.txt").exists()
+    assert "discard local changes" in result.stdout
 
 
 def test_interactive_default_action_switches_branch(home, mutws, monkeypatch):

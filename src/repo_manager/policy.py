@@ -213,7 +213,9 @@ def decide_switch_default(snap: RepositorySnapshot, stash: bool = False) -> Deci
 # -- sync ---------------------------------------------------------------------------
 
 
-def decide_sync(snap: RepositorySnapshot, source_ref: str | None) -> Decision:
+def decide_sync(
+    snap: RepositorySnapshot, source_ref: str | None, stash: bool = False
+) -> Decision:
     """Integrate the fetched remote default branch into the current branch.
 
     Sync deliberately does not require an upstream for the current branch. A local
@@ -221,7 +223,7 @@ def decide_sync(snap: RepositorySnapshot, source_ref: str | None) -> Decision:
     """
     if (d := _in_progress_skip(snap)) is not None:
         return d
-    if snap.worktree.is_dirty:
+    if snap.worktree.is_dirty and not stash:
         return _skip(
             f"{snap.worktree.total_changes} local change(s) would be at risk",
             "commit or stash the changes, then retry sync",
@@ -247,6 +249,11 @@ def decide_sync(snap: RepositorySnapshot, source_ref: str | None) -> Decision:
         return _skip(
             "the fetched remote default branch does not exist",
             "check the remote and default_branch configuration",
+        )
+    if snap.worktree.is_dirty:
+        return _proceed(
+            f"stash, integrate {source_ref} into {snap.checkout.current_branch}, restore",
+            via_stash=True,
         )
     return _proceed(f"integrate {source_ref} into {snap.checkout.current_branch}")
 

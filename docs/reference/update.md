@@ -54,12 +54,16 @@ every state, and [Recovering local work](../guides/recovery.md) for the
 - **`--interactive`** visits each selected repository and lets you choose an action
   with an arrow-key menu. It offers only actions allowed by the safety policy:
   update the current branch, sync the default branch into the current branch, or
-  switch to the default branch and update. `Skip` is always available.
+  switch to the default branch and update. For a dirty repository it also offers
+  stashing or discarding local changes before syncing. `Skip` is always available.
 
 Interactive choices are applied immediately. The command continues after a failed
 repository and prints a final result table. Use `--dry-run --interactive` to make
 the choices without changing repositories. Interactive mode requires a terminal
-and cannot be combined with `--json`.
+and cannot be combined with `--json`. Discarding removes tracked changes and
+non-ignored untracked files, and requires a second confirmation unless `--yes` is
+provided. Stashed changes are restored after the sync; if restore conflicts, the
+stash is retained for recovery.
 
 ## Options
 

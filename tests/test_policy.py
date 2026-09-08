@@ -97,6 +97,15 @@ def test_stash_makes_dirty_ff_eligible(matrix_snapshots):
         assert d.via_stash is True
 
 
+def test_stash_makes_dirty_sync_eligible(matrix_snapshots):
+    decision = policy.decide_sync(
+        matrix_snapshots["dirty"], "origin/main", stash=True
+    )
+
+    assert decision.verdict is Verdict.PROCEED
+    assert decision.via_stash is True
+
+
 def test_stash_does_not_rescue_in_progress(matrix_snapshots):
     """--stash-and-update must never touch a repo mid-operation."""
     snap = matrix_snapshots["rebase-in-progress"]

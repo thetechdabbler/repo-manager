@@ -132,7 +132,6 @@ def test_interactive_plan_offers_safe_actions_for_clean_repository(coord, builde
 @pytest.mark.parametrize(
     "builder_method",
     [
-        "build_dirty",
         "build_detached",
         "build_unreachable_remote",
         "build_rebase_in_progress",
@@ -145,6 +144,17 @@ def test_interactive_plan_only_offers_skip_when_no_action_is_safe(
     item = coord.build_interactive_plan([_spec(builder_method, repo)])[0]
 
     assert [option.value for option in _interactive_choices(item)] == ["skip"]
+
+
+def test_interactive_dirty_repo_offers_stash_and_discard_sync(coord, builder):
+    repo = builder.build_dirty()
+    item = coord.build_interactive_plan([_spec("dirty", repo)])[0]
+
+    assert [option.value for option in _interactive_choices(item)] == [
+        "skip",
+        "stash-sync",
+        "discard-sync",
+    ]
 
 
 def test_in_progress_never_mutated(coord, builder):
@@ -374,6 +384,31 @@ def test_stash_update_clean_restore(coord, builder):
     assert g.head_sha(repo) != before          # fast-forward happened
     assert g.stash_list(repo) == []            # stash consumed
     assert (repo / "docs" / "notes.md").read_text() == "my local notes\n"
+
+
+def test_stash_sync_restores_local_work(coord, builder):
+    repo = builder.build_stash_ok()
+    g = GitBackend()
+    before = g.head_sha(repo)
+
+    result = _run_stash(coord, _spec("stash-ok", repo), Operation.SYNC)
+
+    assert result.verdict is Verdict.UPDATED
+    assert result.restore == "clean"
+    assert g.head_sha(repo) != before
+    assert (repo / "docs" / "notes.md").read_text() == "my local notes\n"
+
+
+def test_discard_local_changes_removes_tracked_and_untracked_work(coord, builder):
+    repo = builder.build_dirty()
+    g = GitBackend()
+
+    result = g.discard_local_changes(repo)
+
+    assert result.ok
+    assert g.status_counts(repo) == (0, 0, 0, 0)
+    assert not (repo / "staged.txt").exists()
+    assert not (repo / "untracked.txt").exists()
 
 
 def test_stash_update_conflict_preserves_work(coord, builder):

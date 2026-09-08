@@ -33,6 +33,7 @@ class PlanItem:
     decision: Decision
     target: str | None = None  # resolved branch for checkout
     sync_rebase: bool = False
+    preparation: str | None = None
 
 
 @dataclass
@@ -41,7 +42,7 @@ class InteractivePlanItem:
 
     spec: RepoSpec
     snapshot: RepositorySnapshot
-    plans: dict[Operation, PlanItem]
+    plans: dict[str, PlanItem]
 
 
 def _now_iso() -> str:
@@ -99,11 +100,31 @@ class OperationCoordinator:
         for spec in specs:
             snapshot = by_path[spec.relative_path]
             plans = {
-                operation: self._plan_from_snapshot(
+                operation.value: self._plan_from_snapshot(
                     spec, snapshot, operation, stash=stash
                 )
                 for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT)
             }
+            if snapshot.worktree.is_dirty:
+                stash_sync = self._plan_from_snapshot(
+                    spec, snapshot, Operation.SYNC, stash=True
+                )
+                if stash_sync.decision.verdict is Verdict.PROCEED:
+                    plans["stash-sync"] = stash_sync
+                    discard_sync = PlanItem(
+                        spec=stash_sync.spec,
+                        snapshot=stash_sync.snapshot,
+                        decision=Decision(
+                            verdict=Verdict.PROCEED,
+                            planned=stash_sync.decision.planned.replace(
+                                "stash, ", "discard local changes, "
+                            ),
+                        ),
+                        target=stash_sync.target,
+                        sync_rebase=stash_sync.sync_rebase,
+                        preparation="discard",
+                    )
+                    plans["discard-sync"] = discard_sync
             result.append(
                 InteractivePlanItem(spec=spec, snapshot=snapshot, plans=plans)
             )
@@ -117,6 +138,7 @@ class OperationCoordinator:
         checkout_branch: str | None = None,
         stash: bool = False,
         sync_rebase: bool = False,
+        preparation: str | None = None,
     ) -> PlanItem:
         if operation is Operation.UPDATE:
             decision = policy.decide_update(snap, stash=stash)
@@ -136,7 +158,7 @@ class OperationCoordinator:
                 )
                 else None
             )
-            decision = policy.decide_sync(snap, target)
+            decision = policy.decide_sync(snap, target, stash=stash)
         else:  # CHECKOUT
             target = self._resolve_checkout_target(snap, checkout_branch)
             remote = snap.identity.remote_name
@@ -157,6 +179,7 @@ class OperationCoordinator:
             decision=decision,
             target=target,
             sync_rebase=sync_rebase,
+            preparation=preparation,
         )
 
     def _resolve_checkout_target(
@@ -217,7 +240,15 @@ class OperationCoordinator:
             # PROCEED verdict is preserved: "would proceed".
             return result
 
-        if dec.via_stash:
+        if item.preparation == "discard":
+            discard = self.backend.discard_local_changes(item.spec.absolute_path)
+            result.commands.extend(["reset --hard HEAD", "clean -fd"])
+            if not discard.ok:
+                result.verdict = Verdict.FAILED
+                result.error = discard.stderr.strip() or "could not discard local changes"
+            else:
+                self._do_sync(item, result)
+        elif dec.via_stash:
             self._do_stash_operation(item, operation, result)
         elif operation is Operation.UPDATE:
             self._do_update(item, result)
@@ -271,8 +302,7 @@ class OperationCoordinator:
         elif operation is Operation.DEFAULT:
             self._do_switch_default(item, result)
         else:
-            result.verdict = Verdict.FAILED
-            result.error = f"stash is not supported for {operation.value}"
+            self._do_sync(item, result)
 
         core_failed = result.verdict is Verdict.FAILED
 

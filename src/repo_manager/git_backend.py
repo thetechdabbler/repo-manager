@@ -312,6 +312,13 @@ class GitBackend:
         """Fast-forward the current branch to `ref`. Fails if not a fast-forward."""
         return self.run(repo, "merge", "--ff-only", ref)
 
+    def discard_local_changes(self, repo: Path) -> GitResult:
+        """Discard tracked and untracked non-ignored worktree changes."""
+        reset = self.run(repo, "reset", "--hard", "HEAD")
+        if not reset.ok:
+            return reset
+        return self.run(repo, "clean", "-fd")
+
     def merge(self, repo: Path, ref: str) -> GitResult:
         """Merge `ref` into the current branch without opening an editor."""
         return self.run(repo, "merge", "--no-edit", ref)

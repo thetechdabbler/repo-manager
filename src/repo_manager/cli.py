@@ -17,6 +17,7 @@ import typer
 from rich.console import Console
 from rich.prompt import Confirm
 from rich.table import Table
+from rich.text import Text
 
 from . import __version__, config
 from .config import (
@@ -588,14 +589,18 @@ def _interactive_choices(
 ) -> list[RadioOption]:
     choices = [RadioOption("skip", "Skip")]
     labels = {
-        Operation.UPDATE: "Update current branch",
-        Operation.SYNC: "Sync default branch into current branch",
-        Operation.DEFAULT: "Switch to default branch and update",
+        "update": "Update current branch",
+        "sync": "Sync default branch into current branch",
+        "default": "Switch to default branch and update",
+        "stash-sync": "Stash local changes, then sync and restore",
+        "discard-sync": "Discard local changes, then sync",
     }
-    for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT):
-        plan = item.plans[operation]
+    for choice in ("update", "sync", "default", "stash-sync", "discard-sync"):
+        plan = item.plans.get(choice)
+        if plan is None:
+            continue
         if plan.decision.verdict is Verdict.PROCEED:
-            choices.append(RadioOption(operation.value, labels[operation]))
+            choices.append(RadioOption(choice, labels[choice]))
     return choices
 
 
@@ -620,17 +625,24 @@ def _interactive_repo_info(item: InteractivePlanItem) -> None:
         else "-"
     )
     console.print()
-    console.print(f"[bold]{snap.name}[/bold]  {snap.identity.relative_path}")
-    console.print(
-        f"  Branch: {branch}  State: {snap.classification.value}  "
+    heading = Text()
+    heading.append(snap.name, style="bold cyan")
+    heading.append(f"  {snap.identity.relative_path}", style="dim")
+    console.print(heading)
+
+    details = Text("  Branch: ")
+    details.append(branch, style="bold magenta")
+    details.append(
+        f"  State: {snap.classification.value}  "
         f"Ahead/behind: {ahead_behind}  Changes: {changes}"
     )
+    console.print(details)
     console.print(f"  Last commit: {last_commit}")
     for warning in snap.warnings:
         console.print(f"  [yellow]! {warning}[/yellow]", highlight=False)
     unavailable = [
         item.plans[operation].decision.reason
-        for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT)
+        for operation in ("update", "sync", "default")
         if item.plans[operation].decision.verdict is Verdict.SKIPPED
     ]
     if unavailable and len(_interactive_choices(item)) == 1:
@@ -675,6 +687,7 @@ def _run_interactive_update(
     dry_run: bool,
     jobs: Optional[int],
     stash: bool,
+    yes: bool,
 ) -> None:
     missing = [s for s in specs if not (s.absolute_path / ".git").exists()]
     live = [s for s in specs if s not in missing]
@@ -747,8 +760,26 @@ def _run_interactive_update(
             )
             continue
 
-        operation = Operation(choice)
-        plan = item.plans[operation]
+        if choice in {"stash-sync", "discard-sync"}:
+            if choice == "discard-sync" and not dry_run and not yes:
+                if not Confirm.ask(
+                    f"Discard local tracked and untracked changes in "
+                    f"'{item.spec.relative_path}' and sync?",
+                    default=False,
+                ):
+                    outcomes.append(
+                        InteractiveOutcome(
+                            relative_path=item.spec.relative_path,
+                            action="Skip",
+                            detail="discard cancelled",
+                        )
+                    )
+                    continue
+            operation = Operation.SYNC
+            plan = item.plans[choice]
+        else:
+            operation = Operation(choice)
+            plan = item.plans[choice]
         report = coordinator.execute(
             [plan],
             operation,
@@ -816,7 +847,9 @@ def update(
             raise _fail("--interactive requires a terminal")
         profile = _resolve_profile(project)
         selected = _select(profile, group, repo)
-        _run_interactive_update(profile, _specs(profile, selected), select, dry_run, jobs, stash)
+        _run_interactive_update(
+            profile, _specs(profile, selected), select, dry_run, jobs, stash, yes
+        )
         return
     _run_mutation(
         Operation.UPDATE, project, group, repo, select, dry_run, yes, ignore_skips,
