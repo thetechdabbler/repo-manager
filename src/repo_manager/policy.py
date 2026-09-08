@@ -69,12 +69,12 @@ def decide_update(snap: RepositorySnapshot, stash: bool = False) -> Decision:
             return _stash_update_decision(snap)
         return _skip(
             f"{w.total_changes} local change(s) would be at risk",
-            "commit or stash the changes, or use --stash-and-update",
+            "commit or stash the changes, or use --stash",
         )
     if cls is Classification.DETACHED:
         return _skip(
             "HEAD is detached",
-            "check out a branch first (repo-manager checkout)",
+            "check out a branch first (repo <project> checkout)",
         )
     if cls is Classification.NO_UPSTREAM:
         return _skip(
@@ -115,7 +115,7 @@ def decide_update(snap: RepositorySnapshot, stash: bool = False) -> Decision:
 
 
 def _stash_update_decision(snap: RepositorySnapshot) -> Decision:
-    """Decide an update for a dirty repo under --stash-and-update.
+    """Decide an update for a dirty repo under --stash.
 
     Only the fast-forward-able case actually stashes; every other remote state gets
     the same skip a clean repo would, because stashing cannot make it updatable.
@@ -154,7 +154,7 @@ def _stash_update_decision(snap: RepositorySnapshot) -> Decision:
     return _proceed("already up to date")
 
 
-# -- switch-default -----------------------------------------------------------------
+# -- default ------------------------------------------------------------------------
 #
 # Gates on worktree/HEAD/default-known/remote-availability only. Whether the default
 # branch itself can fast-forward is resolved by the executor after switching, since
@@ -208,6 +208,47 @@ def decide_switch_default(snap: RepositorySnapshot, stash: bool = False) -> Deci
     if already:
         return _proceed(f"already on {default}; fast-forward if behind")
     return _proceed(f"switch to {default} and fast-forward")
+
+
+# -- sync ---------------------------------------------------------------------------
+
+
+def decide_sync(snap: RepositorySnapshot, source_ref: str | None) -> Decision:
+    """Integrate the fetched remote default branch into the current branch.
+
+    Sync deliberately does not require an upstream for the current branch. A local
+    feature branch can still receive the project default branch. It never stashes.
+    """
+    if (d := _in_progress_skip(snap)) is not None:
+        return d
+    if snap.worktree.is_dirty:
+        return _skip(
+            f"{snap.worktree.total_changes} local change(s) would be at risk",
+            "commit or stash the changes, then retry sync",
+        )
+    if snap.checkout.is_detached:
+        return _skip("HEAD is detached", "check out a branch first")
+    if snap.classification is Classification.AMBIGUOUS_REMOTE:
+        return _skip(
+            "several remotes exist and none is named 'origin'",
+            "set 'remote' for this repository in the project configuration",
+        )
+    if snap.classification is Classification.REMOTE_UNAVAILABLE:
+        return _skip(
+            "the remote could not be reached",
+            "check network or credentials, then retry",
+        )
+    if not snap.checkout.default_branch:
+        return _skip(
+            "the default branch could not be determined",
+            "set default_branch for this repository in the project configuration",
+        )
+    if not source_ref:
+        return _skip(
+            "the fetched remote default branch does not exist",
+            "check the remote and default_branch configuration",
+        )
+    return _proceed(f"integrate {source_ref} into {snap.checkout.current_branch}")
 
 
 # -- checkout -----------------------------------------------------------------------

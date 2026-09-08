@@ -1,18 +1,18 @@
 # Recovering local work
 
-By default, a dirty repository is skipped by `update` and `switch-default` so your
+By default, a dirty repository is skipped by `update` and `default` so your
 local work is never touched. When you do want to update on top of local changes,
-`--stash-and-update` is the opt-in, conflict-safe path.
+`--stash` is the opt-in, conflict-safe path.
 
 ```bash
-repo-manager update --stash-and-update --group backend
-repo-manager switch-default --stash-and-update --repo api
+repo <project> update --stash --group backend
+repo <project> default --stash --repo api
 ```
 
 For each dirty repository that is otherwise fast-forwardable, it:
 
 1. Creates a uniquely named stash, including untracked files.
-2. Fast-forwards using the normal safe path (`switch-default` also switches branch first).
+2. Fast-forwards using the normal safe path (`default` also switches branch first).
 3. Restores the stash.
 4. Reports whether the restore was clean or conflicted.
 

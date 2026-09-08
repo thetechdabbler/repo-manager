@@ -27,11 +27,13 @@ from .config import (
 )
 from .discovery import DEFAULT_EXCLUDES, discover_worktrees
 from .git_backend import GitBackend
-from .models import Operation, StatusReport
+from .models import Operation, ProjectStatus, ProjectsStatusReport, StatusReport
 from .operations import OperationCoordinator
 from .output import (
     render_operation_json,
     render_plan_table,
+    render_projects_status_json,
+    render_projects_status_table,
     render_status_json,
     render_status_table,
     render_summary_json,
@@ -72,7 +74,7 @@ def _resolve_profile(name: Optional[str]) -> Profile:
         hint = (
             f" Known profiles: {', '.join(available)}."
             if available
-            else " Run `repo-manager init <path>` first."
+            else " Run `repo init <path>` first."
         )
         raise _fail(f"no project selected and no active project set.{hint}")
     try:
@@ -197,9 +199,9 @@ def selection_matches_summary(rs, expr: str | None) -> bool:
 # -- commands ------------------------------------------------------------------------
 
 
-@app.command()
-def status(
-    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+@app.command(name="project-status", hidden=True)
+def project_status(
+    project: str = typer.Option(..., "--project", hidden=True),
     group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
     repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
     fetch: bool = typer.Option(False, "--fetch", help="Fetch before computing remote state."),
@@ -242,6 +244,53 @@ def status(
 
     # Phase 1 status is read-only reporting; a missing worktree is the only failure.
     raise typer.Exit(EXIT_FAILURE if missing else EXIT_OK)
+
+
+@app.command()
+def status(
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+) -> None:
+    """Show a local-only overview of every saved project."""
+    rows: list[ProjectStatus] = []
+    warnings: list[str] = []
+    for name in config.list_profiles():
+        try:
+            profile = config.load_profile(name)
+        except ConfigError as exc:
+            warnings.append(f"{name}: {exc}")
+            continue
+        specs = _specs(profile, list(profile.repositories))
+        missing = [spec for spec in specs if not (spec.absolute_path / ".git").exists()]
+        live = [spec for spec in specs if spec not in missing]
+        snapshots = RepositoryService(jobs=profile.policy.jobs).snapshot_all(
+            live, fetch=False
+        )
+        in_progress = sum(
+            snap.worktree.in_progress_operation.value != "none" for snap in snapshots
+        )
+        dirty = sum(
+            snap.worktree.is_dirty
+            and snap.worktree.in_progress_operation.value == "none"
+            for snap in snapshots
+        )
+        clean = len(snapshots) - in_progress - dirty
+        rows.append(
+            ProjectStatus(
+                name=profile.name,
+                root=str(profile.root),
+                repositories_total=len(specs),
+                clean_count=clean,
+                dirty_count=dirty,
+                in_progress_count=in_progress,
+                missing_worktree_count=len(missing),
+            )
+        )
+    report = ProjectsStatusReport(generated_at=_now_iso(), projects=rows, warnings=warnings)
+    if json_out:
+        console.print_json(render_projects_status_json(report))
+    else:
+        render_projects_status_table(report, console)
+    raise typer.Exit(EXIT_FAILURE if warnings else EXIT_OK)
 
 
 @app.command()
@@ -418,6 +467,7 @@ def _run_mutation(
     json_out: bool,
     checkout_branch: Optional[str] = None,
     stash: bool = False,
+    sync_rebase: bool = False,
 ) -> None:
     profile = _resolve_profile(project)
     selected = _select(profile, group, repo)
@@ -436,6 +486,7 @@ def _run_mutation(
         fetch_timeout=float(profile.policy.fetch_timeout_seconds),
         checkout_branch=checkout_branch,
         stash=stash,
+        sync_rebase=sync_rebase,
     )
 
     if select:
@@ -497,9 +548,9 @@ def _preview_plan(coordinator, plan, operation, profile) -> None:
     render_plan_table(preview, console)
 
 
-@app.command()
+@app.command(hidden=True)
 def update(
-    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    project: str = typer.Option(..., "--project", hidden=True),
     group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
     repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
     select: Optional[str] = typer.Option(
@@ -510,9 +561,9 @@ def update(
     ignore_skips: bool = typer.Option(
         False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
     ),
-    stash_and_update: bool = typer.Option(
+    stash: bool = typer.Option(
         False,
-        "--stash-and-update",
+        "--stash",
         help="For dirty repos: stash, fast-forward, then restore (conflict-safe).",
     ),
     jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
@@ -521,13 +572,13 @@ def update(
     """Fast-forward the current branch of eligible repositories. Never switches branches."""
     _run_mutation(
         Operation.UPDATE, project, group, repo, select, dry_run, yes, ignore_skips,
-        jobs, json_out, stash=stash_and_update,
+        jobs, json_out, stash=stash,
     )
 
 
-@app.command(name="switch-default")
-def switch_default(
-    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+@app.command(name="default", hidden=True)
+def default(
+    project: str = typer.Option(..., "--project", hidden=True),
     group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
     repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
     select: Optional[str] = typer.Option(None, help="Selection expression."),
@@ -536,9 +587,9 @@ def switch_default(
     ignore_skips: bool = typer.Option(
         False, "--ignore-skips", help="Exit 0 even when repos are safety-skipped."
     ),
-    stash_and_update: bool = typer.Option(
+    stash: bool = typer.Option(
         False,
-        "--stash-and-update",
+        "--stash",
         help="For dirty repos: stash, switch and fast-forward, then restore.",
     ),
     jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
@@ -546,41 +597,37 @@ def switch_default(
 ) -> None:
     """Switch each eligible repository to its default branch and fast-forward it."""
     _run_mutation(
-        Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
-        ignore_skips, jobs, json_out, stash=stash_and_update,
+        Operation.DEFAULT, project, group, repo, select, dry_run, yes,
+        ignore_skips, jobs, json_out, stash=stash,
     )
 
 
-@app.command(name="sync", hidden=True)
+@app.command(hidden=True)
 def sync(
-    project: Optional[str] = typer.Option(None),
-    group: Optional[str] = typer.Option(None),
-    repo: Optional[str] = typer.Option(None),
-    select: Optional[str] = typer.Option(None),
-    dry_run: bool = typer.Option(False, "--dry-run"),
-    yes: bool = typer.Option(False, "--yes", "-y"),
+    project: str = typer.Option(..., "--project", hidden=True),
+    group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
+    repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
+    select: Optional[str] = typer.Option(None, help="Selection expression."),
+    rebase: bool = typer.Option(False, "--rebase", help="Rebase instead of merging."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview; make no changes."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
     ignore_skips: bool = typer.Option(False, "--ignore-skips"),
-    stash_and_update: bool = typer.Option(False, "--stash-and-update"),
-    jobs: Optional[int] = typer.Option(None),
-    json_out: bool = typer.Option(False, "--json"),
+    jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
 ) -> None:
-    """Deprecated alias for switch-default."""
-    err_console.print(
-        "[yellow]note:[/yellow] 'sync' is deprecated; use 'switch-default'.",
-        highlight=False,
-    )
+    """Merge the fetched remote default branch into the current branch."""
     _run_mutation(
-        Operation.SWITCH_DEFAULT, project, group, repo, select, dry_run, yes,
-        ignore_skips, jobs, json_out, stash=stash_and_update,
+        Operation.SYNC, project, group, repo, select, dry_run, yes,
+        ignore_skips, jobs, json_out, sync_rebase=rebase,
     )
 
 
-@app.command()
+@app.command(hidden=True)
 def checkout(
     branch: str = typer.Option(
         ..., "--branch", help="Branch to check out, or 'default' for each repo's default."
     ),
-    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    project: str = typer.Option(..., "--project", hidden=True),
     group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
     repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
     select: Optional[str] = typer.Option(None, help="Selection expression."),
@@ -599,12 +646,12 @@ def checkout(
     )
 
 
-@app.command()
+@app.command(hidden=True)
 def summary(
     since: str = typer.Option(
         "7d", "--since", help="Window: 7d, 2w, 24h, an ISO date, or 'yesterday'."
     ),
-    project: Optional[str] = typer.Option(None, help="Profile name; defaults to active."),
+    project: str = typer.Option(..., "--project", hidden=True),
     group: Optional[str] = typer.Option(None, help="Limit to a repository group."),
     repo: Optional[str] = typer.Option(None, help="Limit to one repository."),
     select: Optional[str] = typer.Option(None, help="Selection expression."),
@@ -652,21 +699,21 @@ def summary(
     raise typer.Exit(EXIT_FAILURE if missing else EXIT_OK)
 
 
-@app.command()
-def profiles() -> None:
-    """List known profiles and mark the active one."""
+@app.command(name="projects")
+def projects() -> None:
+    """List saved projects and mark the active project."""
     active = config.load_active_project()
     names = config.list_profiles()
     if not names:
-        console.print("No profiles yet. Run `repo-manager init <path>`.")
+        console.print("No projects yet. Run `repo init <path>`.")
         raise typer.Exit(EXIT_OK)
     for n in names:
         mark = " [green](active)[/green]" if n == active else ""
         console.print(f"- {n}{mark}")
 
 
-@app.command()
-def forget(
+@app.command(name="remove")
+def remove(
     name: str = typer.Argument(..., help="Profile to remove."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
 ) -> None:
@@ -714,36 +761,38 @@ def version() -> None:
 
 
 _MANUAL = """\
-[bold]repo-manager[/bold] — work safely across many independent Git repositories
+[bold]repo[/bold] work safely across many independent Git repositories
 
 [bold]Getting started[/bold]
-  repo-manager init <path> [--name N] [--yes]   Scan a workspace, write a profile
-  repo-manager status [--fetch]                 Show state of every repo
-  repo-manager update --dry-run                 Preview a safe fast-forward update
-  repo-manager profiles                         List profiles, mark the active one
+  repo init <path> [--name N] [--yes]           Scan a workspace, save a project
+  repo status                                    Show a local overview of all projects
+  repo services update --dry-run                 Preview a safe fast-forward update
+  repo projects                                  List saved projects
 
 [bold]Commands[/bold]
   init            Discover repositories and save a profile. No git mutation.
-  status          Report each repository's state. Read-only unless --fetch.
-  update          Fast-forward the current branch of eligible repos. Never switches.
-  switch-default  Switch each eligible repo to its default branch and fast-forward.
-  checkout        Check out a branch across repos, creating tracking branches as needed.
-  summary         Summarize commits across repos since a date (read-only).
-  profiles        List known profiles.
-  forget          Remove a saved profile (config only; never a repository).
+  status          Show local counts for every saved project.
+  projects        List known projects.
+  remove          Remove a saved project (config only; never a repository).
+  <project> status    Report detailed repository state. Read-only unless --fetch.
+  <project> update    Fast-forward the current branch only. Never switches branches.
+  <project> sync      Merge the remote default branch into the current branch.
+  <project> default   Switch to the default branch and fast-forward it.
+  <project> checkout  Check out a branch across repositories.
+  <project> summary   Summarize commits across repositories since a date.
   version         Print the version.
   help            Show this manual.
 
 [bold]Common options[/bold]
-  --project N     Use profile N instead of the active one.
   --group G       Limit to repositories tagged with group G.
   --repo R        Limit to a single repository (by name or path).
   --select EXPR   Filter by expression: all, clean, dirty, ready, ahead,
                   group:NAME, search:TEXT, name:NAME (comma-separated union).
-  --fetch         Fetch before computing ahead/behind (status only).
+  --fetch         Fetch before computing ahead/behind (project status only).
   --since W       Summary window: 7d, 2w, 24h, an ISO date, or 'yesterday'.
   --markdown P    Write a Markdown summary to path P (summary only).
-  --stash-and-update  Dirty repos: stash, fast-forward, restore (update/switch-default).
+  --stash         Dirty repos: stash, fast-forward, restore (update/default).
+  --rebase        Rebase instead of merge (sync only).
   --dry-run       Preview a mutation; make no changes.
   --yes / -y      Skip the confirmation prompt (required non-interactively).
   --ignore-skips  Exit 0 even when repositories are safety-skipped.
@@ -759,7 +808,7 @@ _MANUAL = """\
   ahead                 Local commits not on the remote. No fast-forward possible.
   diverged              Both sides moved. Needs explicit action.
   no-upstream           Branch has no tracking configuration.
-  default-branch-unknown  Could not infer a default branch; blocks switch-default.
+  default-branch-unknown  Could not infer a default branch; blocks default and sync.
   ambiguous-remote      Several remotes, none named 'origin'. Configure one.
   remote-unavailable    Fetch failed. Remote state is unknown, never guessed.
 
@@ -776,15 +825,17 @@ possibly-stale numbers. Stale remote refs are never presented as current state.[
   3  One or more operations were safety-skipped.
 
 [bold]Examples[/bold]
-  repo-manager init ~/work/services --name services --yes
-  repo-manager status --fetch
-  repo-manager update --dry-run
-  repo-manager update --group backend --yes
-  repo-manager switch-default --select clean --dry-run
-  repo-manager checkout --branch default --repo api
-  repo-manager summary --since 7d --markdown standup.md
+  repo init ~/work/services --name services --yes
+  repo status
+  repo services status --fetch
+  repo services update --dry-run
+  repo services update --group backend --yes
+  repo services sync --rebase --select clean --dry-run
+  repo services default --stash --repo api --yes
+  repo services checkout --branch default --repo api
+  repo services summary --since 7d --markdown standup.md
 
-Run [bold]repo-manager <command> --help[/bold] for the full option list of any command.
+Run [bold]repo <project> <command> --help[/bold] for a project command's options.
 """
 
 
@@ -794,8 +845,51 @@ def help_() -> None:
     console.print(_MANUAL, highlight=False)
 
 
+_PROJECT_COMMANDS = {
+    "status": "project-status",
+    "update": "update",
+    "sync": "sync",
+    "default": "default",
+    "checkout": "checkout",
+    "summary": "summary",
+}
+_GLOBAL_COMMANDS = {"status", "projects", "init", "remove", "version", "help"}
+_LEGACY_COMMANDS = {"repo-manager", "switch-default", "profiles", "forget"}
+
+
+def normalize_argv(args: list[str]) -> list[str]:
+    """Translate the public project-first grammar to hidden Typer commands."""
+    if not args:
+        return args
+    first = args[0]
+    if first in _GLOBAL_COMMANDS:
+        return args
+    if first in _LEGACY_COMMANDS or first in _PROJECT_COMMANDS:
+        raise ValueError(
+            "project commands use `repo <project> <command>`. "
+            "Examples: `repo services update` and `repo services default`."
+        )
+    if first.startswith("-"):
+        return args
+    if len(args) < 2 or args[1] not in _PROJECT_COMMANDS:
+        raise ValueError(
+            f"unknown command. Use `repo {first} status`, or run `repo help`."
+        )
+    command = args[1]
+    return [_PROJECT_COMMANDS[command], "--project", first, *args[2:]]
+
+
 def main() -> None:
-    app()
+    try:
+        args = normalize_argv(sys.argv[1:])
+    except ValueError as exc:
+        err_console.print(f"[red]error:[/red] {exc}", highlight=False)
+        raise SystemExit(EXIT_USAGE)
+    try:
+        app(args=args, prog_name="repo")
+    except ConfigError as exc:
+        err_console.print(f"[red]error:[/red] {exc}", highlight=False)
+        raise SystemExit(EXIT_USAGE) from exc
 
 
 if __name__ == "__main__":

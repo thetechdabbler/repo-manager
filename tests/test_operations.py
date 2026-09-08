@@ -24,8 +24,10 @@ def _spec(name: str, path: Path) -> RepoSpec:
     )
 
 
-def _run(coord, spec, operation, dry_run=False, checkout_branch=None):
-    plan = coord.build_plan([spec], operation, checkout_branch=checkout_branch)
+def _run(coord, spec, operation, dry_run=False, checkout_branch=None, sync_rebase=False):
+    plan = coord.build_plan(
+        [spec], operation, checkout_branch=checkout_branch, sync_rebase=sync_rebase
+    )
     report = coord.execute(
         plan, operation, project_name="t", project_root="/", dry_run=dry_run
     )
@@ -101,7 +103,7 @@ def test_in_progress_never_mutated(coord, builder):
     gd = GitBackend().git_dir(repo)
     assert (gd / "rebase-merge").exists() or (gd / "rebase-apply").exists()
 
-    for op in (Operation.UPDATE, Operation.SWITCH_DEFAULT):
+    for op in (Operation.UPDATE, Operation.DEFAULT, Operation.SYNC):
         result = _run(coord, _spec("rebase-in-progress", repo), op)
         assert result.verdict is Verdict.SKIPPED
         assert result.commands == []
@@ -142,6 +144,109 @@ def test_switch_default_skips_when_default_unknown(coord, builder):
     result = _run(coord, _spec("ambiguous-default", repo), Operation.SWITCH_DEFAULT)
     assert result.verdict is Verdict.SKIPPED
     assert "default branch" in result.reason.lower()
+
+
+# -- sync ---------------------------------------------------------------------------
+
+
+def _advance_default(builder, name: str) -> None:
+    from conftest import commit_file
+
+    seed = builder.seeds / name
+    commit_file(seed, "src/app.py", "VERSION = 2\nSHARED = 'upstream'\n", "Main update")
+    git(seed, "push", "-q", "origin", "main")
+
+
+def test_sync_merges_default_into_current_branch_without_upstream(coord, builder):
+    from conftest import commit_file
+
+    repo = builder.build_clean_current()
+    git(repo, "switch", "-q", "-c", "feature/work")
+    commit_file(repo, "feature.txt", "feature\n", "Feature work")
+    _advance_default(builder, "clean-current")
+
+    result = _run(coord, _spec("clean-current", repo), Operation.SYNC)
+
+    assert result.verdict is Verdict.UPDATED
+    assert result.source_branch == "origin/main"
+    assert GitBackend().current_branch(repo) == "feature/work"
+    assert GitBackend().in_progress_operation(repo) == "none"
+
+
+def test_sync_rebase_is_explicit(coord, builder):
+    from conftest import commit_file
+
+    repo = builder.build_clean_current()
+    git(repo, "switch", "-q", "-c", "feature/work")
+    commit_file(repo, "feature.txt", "feature\n", "Feature work")
+    _advance_default(builder, "clean-current")
+
+    result = _run(coord, _spec("clean-current", repo), Operation.SYNC, sync_rebase=True)
+
+    assert result.verdict is Verdict.UPDATED
+    assert result.commands == ["rebase origin/main"]
+    assert GitBackend().current_branch(repo) == "feature/work"
+
+
+def test_sync_skips_dirty_unknown_default_and_unreachable(coord, builder):
+    for name, repo in (
+        ("dirty", builder.build_dirty()),
+        ("ambiguous-default", builder.build_ambiguous_default()),
+        ("unreachable-remote", builder.build_unreachable_remote()),
+    ):
+        result = _run(coord, _spec(name, repo), Operation.SYNC)
+        assert result.verdict is Verdict.SKIPPED
+
+
+def test_sync_merge_conflict_is_left_for_manual_resolution(coord, builder):
+    from conftest import commit_file
+
+    repo = builder.build_clean_current()
+    git(repo, "switch", "-q", "-c", "feature/work")
+    commit_file(repo, "src/app.py", "VERSION = 1\nSHARED = 'feature'\n", "Feature edit")
+    _advance_default(builder, "clean-current")
+
+    result = _run(coord, _spec("clean-current", repo), Operation.SYNC)
+
+    assert result.verdict is Verdict.FAILED
+    assert result.error == "sync merge conflict"
+    assert GitBackend().in_progress_operation(repo) == "merge"
+    assert result.next_action and "merge --continue" in result.next_action
+
+
+def test_sync_rebase_conflict_is_left_for_manual_resolution(coord, builder):
+    from conftest import commit_file
+
+    repo = builder.build_clean_current()
+    git(repo, "switch", "-q", "-c", "feature/work")
+    commit_file(repo, "src/app.py", "VERSION = 1\nSHARED = 'feature'\n", "Feature edit")
+    _advance_default(builder, "clean-current")
+
+    result = _run(
+        coord, _spec("clean-current", repo), Operation.SYNC, sync_rebase=True
+    )
+
+    assert result.verdict is Verdict.FAILED
+    assert result.error == "sync rebase conflict"
+    assert GitBackend().in_progress_operation(repo) == "rebase"
+    assert result.next_action and "rebase --continue" in result.next_action
+
+
+def test_sync_conflict_does_not_stop_later_repositories(coord, builder):
+    from conftest import commit_file
+
+    conflict = builder.build_clean_current()
+    git(conflict, "switch", "-q", "-c", "feature/work")
+    commit_file(conflict, "src/app.py", "VERSION = 1\nSHARED = 'feature'\n", "Feature edit")
+    _advance_default(builder, "clean-current")
+    later = builder.build_clean_behind()
+    specs = [_spec("conflict", conflict), _spec("later", later)]
+
+    plan = coord.build_plan(specs, Operation.SYNC)
+    report = coord.execute(plan, Operation.SYNC, "t", "/", dry_run=False)
+
+    assert report.results[0].verdict is Verdict.FAILED
+    assert report.results[1].verdict in {Verdict.UPDATED, Verdict.NOOP}
 
 
 # -- checkout -----------------------------------------------------------------------
@@ -238,7 +343,7 @@ def test_stash_update_conflict_preserves_work(coord, builder):
     stashes = g.stash_list(repo)
     assert len(stashes) == 1
     # The preserved stash carries our uniquely named entry.
-    assert "repo-manager auto-stash" in stashes[0][1]
+    assert "repo auto-stash" in stashes[0][1]
 
 
 def test_stash_never_touches_in_progress(coord, builder):

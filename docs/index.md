@@ -1,7 +1,7 @@
 <div class="rm-hero" markdown>
 <span class="rm-eyebrow">Multi-repo git, safely</span>
 
-# repo-manager
+# repo
 
 One workspace, many repositories, no surprises. Inspect, update, and summarize a tree
 of independent Git repos. Only clean, fast-forwardable repos ever change, and every
@@ -65,23 +65,26 @@ result, not a failure to hide.
 ```text
 SKIPPED  services/payments-api
 Reason:  4 local change(s) would be at risk
-Next:    commit or stash the changes, or use --stash-and-update
+Next:    commit or stash the changes, or use --stash
 ```
 
 ## 60-second tour
 
 ```bash
 # Scan a workspace and save a profile (no git mutation).
-repo-manager init ~/work/services --name services --yes
+repo init ~/work/services --name services --yes
 
-# See the state of every repository.
-repo-manager status --fetch
+# See a local overview of every saved project.
+repo status
+
+# See detailed state for one project.
+repo services status --fetch
 
 # Preview a safe update: what would change, and why the rest is skipped.
-repo-manager update --dry-run
+repo services update --dry-run
 
 # Fast-forward the eligible repositories.
-repo-manager update --yes
+repo services update --yes
 ```
 
 See [Installation](installation.md) to get started, or the

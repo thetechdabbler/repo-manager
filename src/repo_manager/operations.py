@@ -32,6 +32,7 @@ class PlanItem:
     snapshot: RepositorySnapshot
     decision: Decision
     target: str | None = None  # resolved branch for checkout
+    sync_rebase: bool = False
 
 
 def _now_iso() -> str:
@@ -53,6 +54,7 @@ class OperationCoordinator:
         fetch_timeout: float = 30.0,
         checkout_branch: str | None = None,
         stash: bool = False,
+        sync_rebase: bool = False,
     ) -> list[PlanItem]:
         """Fetch + snapshot in parallel, then decide per repo. Read-only."""
         # All three operations need current remote state to decide safely.
@@ -67,9 +69,22 @@ class OperationCoordinator:
             if operation is Operation.UPDATE:
                 decision = policy.decide_update(snap, stash=stash)
                 target = None
-            elif operation is Operation.SWITCH_DEFAULT:
+            elif operation is Operation.DEFAULT:
                 decision = policy.decide_switch_default(snap, stash=stash)
                 target = snap.checkout.default_branch
+            elif operation is Operation.SYNC:
+                remote = snap.identity.remote_name
+                default = snap.checkout.default_branch
+                target = (
+                    f"{remote}/{default}"
+                    if remote
+                    and default
+                    and self.backend.branch_exists_remote(
+                        spec.absolute_path, remote, default
+                    )
+                    else None
+                )
+                decision = policy.decide_sync(snap, target)
             else:  # CHECKOUT
                 target = self._resolve_checkout_target(snap, checkout_branch)
                 remote = snap.identity.remote_name
@@ -86,7 +101,15 @@ class OperationCoordinator:
                 decision = policy.decide_checkout(
                     snap, target, exists_local, exists_remote
                 )
-            plan.append(PlanItem(spec=spec, snapshot=snap, decision=decision, target=target))
+            plan.append(
+                PlanItem(
+                    spec=spec,
+                    snapshot=snap,
+                    decision=decision,
+                    target=target,
+                    sync_rebase=sync_rebase,
+                )
+            )
         return plan
 
     def _resolve_checkout_target(
@@ -138,6 +161,7 @@ class OperationCoordinator:
             before_head=snap.checkout.head_sha,
             after_branch=snap.checkout.current_branch,
             after_head=snap.checkout.head_sha,
+            source_branch=item.target if operation is Operation.SYNC else None,
         )
 
         if dec.verdict is Verdict.SKIPPED:
@@ -150,8 +174,10 @@ class OperationCoordinator:
             self._do_stash_operation(item, operation, result)
         elif operation is Operation.UPDATE:
             self._do_update(item, result)
-        elif operation is Operation.SWITCH_DEFAULT:
+        elif operation is Operation.DEFAULT:
             self._do_switch_default(item, result)
+        elif operation is Operation.SYNC:
+            self._do_sync(item, result)
         else:
             self._do_checkout(item, result)
 
@@ -180,7 +206,7 @@ class OperationCoordinator:
         """
         repo = item.spec.absolute_path
         rel = item.snapshot.identity.relative_path
-        message = f"repo-manager auto-stash: {rel} #{self._next_stash_token()}"
+        message = f"repo auto-stash: {rel} #{self._next_stash_token()}"
 
         push = self.backend.stash_push(repo, message)
         result.commands.append("stash push --include-untracked")
@@ -195,8 +221,11 @@ class OperationCoordinator:
         # Run the core mutation. These set verdict FAILED on failure.
         if operation is Operation.UPDATE:
             self._do_update(item, result)
-        else:
+        elif operation is Operation.DEFAULT:
             self._do_switch_default(item, result)
+        else:
+            result.verdict = Verdict.FAILED
+            result.error = f"stash is not supported for {operation.value}"
 
         core_failed = result.verdict is Verdict.FAILED
 
@@ -296,6 +325,37 @@ class OperationCoordinator:
             if not res.ok:
                 result.verdict = Verdict.FAILED
                 result.error = res.stderr.strip() or "fast-forward failed"
+
+    def _do_sync(self, item: PlanItem, result: OperationResult) -> None:
+        repo = item.spec.absolute_path
+        source = item.target
+        if not source:
+            result.verdict = Verdict.FAILED
+            result.error = "no fetched remote default branch resolved"
+            return
+
+        if item.sync_rebase:
+            res = self.backend.rebase(repo, source)
+            result.commands.append(f"rebase {source}")
+            conflict_command = "rebase --continue"
+        else:
+            res = self.backend.merge(repo, source)
+            result.commands.append(f"merge --no-edit {source}")
+            conflict_command = "merge --continue"
+
+        if res.ok:
+            return
+
+        result.verdict = Verdict.FAILED
+        active = self.backend.in_progress_operation(repo)
+        if active in {"merge", "rebase"}:
+            result.error = f"sync {active} conflict"
+            result.next_action = (
+                f"resolve conflicts, then run `git -C {repo} {conflict_command}` "
+                f"or `git -C {repo} {active} --abort`"
+            )
+        else:
+            result.error = res.stderr.strip() or f"{result.operation.value} failed"
 
     def _do_checkout(self, item: PlanItem, result: OperationResult) -> None:
         repo = item.spec.absolute_path

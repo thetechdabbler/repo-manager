@@ -37,11 +37,11 @@ pipx install /path/to/repo-manager
 ## Verify
 
 ```bash
-repo-manager version
-repo-manager help
+repo version
+repo help
 ```
 
-`repo-manager help` prints a one-screen manual: every command, the repository states,
+`repo help` prints a one-screen manual: every command, the repository states,
 and the exit codes.
 
 ## Configuration location
@@ -49,13 +49,15 @@ and the exit codes.
 Profiles are stored under your XDG config directory, one file per workspace:
 
 ```text
-~/.config/repo-manager/
+~/.config/repo/
 ├── config.toml            # global settings and the active project
 └── projects/
     └── services.toml      # one profile per workspace
 ```
 
-Set `REPO_MANAGER_HOME` to override that location (useful for testing or for keeping
-profiles in a dotfiles repository).
+On first run, an existing `~/.config/repo-manager/` directory is moved to this new
+location. If both directories exist, `repo` stops and asks you to resolve them
+manually. Set `REPO_HOME` to override the new location (useful for testing or for keeping
+projects in a dotfiles repository).
 
 See [Configuration](concepts/configuration.md) for the profile schema.

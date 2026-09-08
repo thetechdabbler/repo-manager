@@ -119,7 +119,7 @@ def test_missing_project_section_rejected(tmp_path):
 
 
 def test_active_project_roundtrip(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("REPO_HOME", str(tmp_path / "home"))
     assert config.load_active_project() is None
     config.set_active_project("demo")
     assert config.load_active_project() == "demo"
@@ -129,7 +129,7 @@ def test_active_project_roundtrip(tmp_path, monkeypatch):
 
 
 def test_delete_profile_removes_only_the_config(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("REPO_HOME", str(tmp_path / "home"))
     (tmp_path / "svc" / "api").mkdir(parents=True)
     config.save_profile(_profile(tmp_path))
     path = config.profile_path("demo")
@@ -144,16 +144,47 @@ def test_delete_profile_removes_only_the_config(tmp_path, monkeypatch):
 
 
 def test_delete_missing_profile_raises(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("REPO_HOME", str(tmp_path / "home"))
     with pytest.raises(ConfigError, match="no profile named"):
         config.delete_profile("ghost")
 
 
 def test_clear_active_project(tmp_path, monkeypatch):
-    monkeypatch.setenv("REPO_MANAGER_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("REPO_HOME", str(tmp_path / "home"))
     config.set_active_project("demo")
     assert config.load_active_project() == "demo"
     config.clear_active_project()
     assert config.load_active_project() is None
     # Idempotent even when nothing is set.
     config.clear_active_project()
+
+
+def test_migrates_legacy_config_home_on_first_run(tmp_path, monkeypatch):
+    monkeypatch.delenv("REPO_HOME", raising=False)
+    monkeypatch.delenv("REPO_MANAGER_HOME", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    legacy = tmp_path / "config" / "repo-manager"
+    (legacy / "projects").mkdir(parents=True)
+    (legacy / "config.toml").write_text('active_project = "demo"\n', encoding="utf-8")
+
+    assert config.config_home() == tmp_path / "config" / "repo"
+    assert not legacy.exists()
+    assert config.load_active_project() == "demo"
+
+
+def test_config_migration_refuses_two_existing_directories(tmp_path, monkeypatch):
+    monkeypatch.delenv("REPO_HOME", raising=False)
+    monkeypatch.delenv("REPO_MANAGER_HOME", raising=False)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "config"))
+    (tmp_path / "config" / "repo-manager").mkdir(parents=True)
+    (tmp_path / "config" / "repo").mkdir(parents=True)
+
+    with pytest.raises(ConfigError, match="both configuration directories exist"):
+        config.config_home()
+
+
+def test_reserved_project_name_is_rejected(tmp_path):
+    profile = _profile(tmp_path)
+    profile.name = "status"
+    with pytest.raises(ConfigError, match="reserved"):
+        config.save_profile(profile)

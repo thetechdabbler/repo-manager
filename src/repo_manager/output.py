@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from .models import Classification, FetchResult, StatusReport
+from .models import Classification, FetchResult, ProjectsStatusReport, StatusReport
 
 # Color per classification, chosen so the eye lands on what needs attention.
 _CLASS_STYLE = {
@@ -36,16 +36,47 @@ def render_status_json(report: StatusReport) -> str:
     return json.dumps(report.to_dict(), indent=2)
 
 
+def render_projects_status_json(report: ProjectsStatusReport) -> str:
+    return json.dumps(report.to_dict(), indent=2)
+
+
+def render_projects_status_table(
+    report: ProjectsStatusReport, console: Console | None = None
+) -> None:
+    console = console or Console()
+    table = Table(title="repo · projects", title_style="bold", header_style="bold")
+    table.add_column("Project")
+    table.add_column("Root", overflow="fold")
+    table.add_column("Repos", justify="right")
+    table.add_column("Clean", justify="right")
+    table.add_column("Dirty", justify="right")
+    table.add_column("In progress", justify="right")
+    table.add_column("Missing", justify="right")
+    for project in report.projects:
+        table.add_row(
+            project.name,
+            project.root,
+            str(project.repositories_total),
+            str(project.clean_count),
+            str(project.dirty_count),
+            str(project.in_progress_count),
+            str(project.missing_worktree_count),
+        )
+    console.print(table)
+    _print_warnings_from_list(report.warnings, console)
+
+
 def render_status_table(report: StatusReport, console: Console | None = None) -> None:
     console = console or Console()
 
     table = Table(
-        title=f"repo-manager · {report.project_name}",
+        title=f"repo · {report.project_name}",
         title_style="bold",
         header_style="bold",
         expand=False,
     )
-    table.add_column("Repository", overflow="fold")
+    table.add_column("Name")
+    table.add_column("Path", overflow="fold")
     table.add_column("Branch")
     table.add_column("State")
     table.add_column("↑/↓")
@@ -73,7 +104,7 @@ def render_status_table(report: StatusReport, console: Console | None = None) ->
         else:
             last = "-"
 
-        table.add_row(snap.identity.relative_path, branch, state, ahead_behind, changes, last)
+        table.add_row(snap.name, snap.identity.relative_path, branch, state, ahead_behind, changes, last)
 
     console.print(table)
     _print_totals(report, console)
@@ -124,11 +155,15 @@ def _print_warnings(report: StatusReport, console: Console) -> None:
     for snap in report.repositories:
         for w in snap.warnings:
             all_warnings.append(f"{snap.identity.relative_path}: {w}")
-    if not all_warnings:
+    _print_warnings_from_list(all_warnings, console)
+
+
+def _print_warnings_from_list(warnings: list[str], console: Console) -> None:
+    if not warnings:
         return
     console.print()
-    for w in all_warnings:
-        console.print(Text(f"! {w}", style="yellow"), highlight=False)
+    for warning in warnings:
+        console.print(Text(f"! {warning}", style="yellow"), highlight=False)
 
 
 def eprint(message: str) -> None:
@@ -156,7 +191,7 @@ def render_plan_table(report: OperationReport, console: Console | None = None) -
     """The pre-mutation plan: what each repository will do, and why the skips skip."""
     console = console or Console()
     verb = "Plan" if report.dry_run else "Result"
-    title = f"repo-manager · {report.operation.value} · {report.project_name}"
+    title = f"repo · {report.operation.value} · {report.project_name}"
     if report.dry_run:
         title += "  (dry run — no changes made)"
 
@@ -171,6 +206,8 @@ def render_plan_table(report: OperationReport, console: Console | None = None) -
         vtext = Text(verdict.value, style=_VERDICT_STYLE.get(verdict, ""))
         branch = r.after_branch or r.before_branch or "?"
         detail = r.planned if verdict in (Verdict.PROCEED, Verdict.UPDATED, Verdict.NOOP) else r.reason
+        if r.source_branch:
+            detail = f"{detail} (source: {r.source_branch})"
         if r.error:
             detail = r.error
         table.add_row(r.relative_path, branch, vtext, detail)
@@ -210,7 +247,7 @@ def render_summary_table(report: SummaryReport, console: Console | None = None) 
     console = console or Console()
     console.print(
         Text(
-            f"repo-manager · summary · {report.project_name} · since {report.since}",
+            f"repo · summary · {report.project_name} · since {report.since}",
             style="bold",
         )
     )

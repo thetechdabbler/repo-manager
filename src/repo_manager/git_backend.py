@@ -304,13 +304,21 @@ class GitBackend:
 
     # -- local mutations ----------------------------------------------------------
     #
-    # These never touch the network. Update/switch-default fetch first (in
+    # These never touch the network. Update/default/sync fetch first (in
     # parallel), then fast-forward locally against the already-updated ref, so a
     # mutation can never block on a remote.
 
     def merge_ff_only(self, repo: Path, ref: str) -> GitResult:
         """Fast-forward the current branch to `ref`. Fails if not a fast-forward."""
         return self.run(repo, "merge", "--ff-only", ref)
+
+    def merge(self, repo: Path, ref: str) -> GitResult:
+        """Merge `ref` into the current branch without opening an editor."""
+        return self.run(repo, "merge", "--no-edit", ref)
+
+    def rebase(self, repo: Path, ref: str) -> GitResult:
+        """Rebase the current branch onto `ref`."""
+        return self.run(repo, "rebase", ref)
 
     def switch(self, repo: Path, branch: str) -> GitResult:
         """Check out an existing local branch. Git refuses on overwrite risk."""

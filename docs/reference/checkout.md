@@ -18,7 +18,7 @@ failure with git's own message, so nothing is lost.
 
 ```mermaid
 flowchart TD
-  A["repo-manager checkout --branch B"] --> B["Resolve target per repo<br/>(default → repo's default branch)"]
+  A["repo <project> checkout --branch B"] --> B["Resolve target per repo<br/>(default → repo's default branch)"]
   B --> C{"Branch exists?"}
   C -- "nowhere" --> S["Skip: branch not found"]
   C -- "in-progress op" --> S2["Skip: finish/abort first"]
@@ -51,11 +51,11 @@ flowchart TD
 
 ```bash
 # One branch across a group, creating tracking branches as needed.
-repo-manager checkout --branch dev --group backend --yes
+repo <project> checkout --branch dev --group backend --yes
 
 # Return selected repos to their own default branches.
-repo-manager checkout --branch default --repo api --yes
+repo <project> checkout --branch default --repo api --yes
 
 # Preview first.
-repo-manager checkout --branch release/1.2 --group services --dry-run
+repo <project> checkout --branch release/1.2 --group services --dry-run
 ```

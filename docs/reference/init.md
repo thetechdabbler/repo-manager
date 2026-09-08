@@ -12,13 +12,13 @@ infers a default branch, recording the evidence (remote `HEAD`, the current upst
 or a common name like `main`) so you can tell a proven default from a guess.
 
 It then shows a selectable table. You choose which repositories to include, review a
-preview of the profile, and it is written to
-`~/.config/repo-manager/projects/<name>.toml`. Nothing is fetched, and no repository
+preview of the project, and it is written to
+`~/.config/repo/projects/<name>.toml`. Nothing is fetched, and no repository
 is modified.
 
 ```mermaid
 flowchart TD
-  A["repo-manager init PATH"] --> B["Walk PATH to max-depth<br/>skip excluded dirs"]
+  A["repo init PATH"] --> B["Walk PATH to max-depth<br/>skip excluded dirs"]
   B --> C["Find directories with a .git"]
   C --> D["Read branch and origin<br/>infer default branch + evidence"]
   D --> E{"--yes ?"}
@@ -75,17 +75,35 @@ The setting is saved to the profile as `discovery.descend_into_repositories`.
 
 ```bash
 # Interactive: scan, pick repositories, review, then save.
-repo-manager init ~/work/services --name services
+repo init ~/work/services --name services
 
 # Non-interactive: take everything discovered.
-repo-manager init ~/work/services --name services --yes
+repo init ~/work/services --name services --yes
 
 # Shallow scan against a non-origin remote.
-repo-manager init ~/work/services --max-depth 2 --remote upstream --yes
+repo init ~/work/services --max-depth 2 --remote upstream --yes
 
 # Umbrella repo: the root is itself a git repo holding independent clones.
-repo-manager init ~/work/services-env --name services --include-nested
+repo init ~/work/services-env --name services --include-nested
+
+# Example: a Git umbrella root containing independent child clones.
+repo init /Users/mchoudhary/docker-env --name core --include-nested --yes
 ```
+
+If the workspace root is already a Git repository, the default scan records that root
+and stops there. For example, a root such as `/Users/mchoudhary/docker-env` may contain
+`Entrata/.git`, `Common/.git`, and `LeaseManagement/.git`, but a normal scan still saves
+only `path = "."`. Use `--include-nested` to discover those independent child clones.
+
+After rescanning, verify the saved entries with:
+
+```bash
+repo core status
+```
+
+The detailed table shows both the saved repository name and its relative path. A
+submodule or linked worktree has a `.git` file and remains excluded unless linked
+worktrees are explicitly enabled.
 
 See [Configuration](../concepts/configuration.md) for the profile schema and the full
 default-branch inference order.

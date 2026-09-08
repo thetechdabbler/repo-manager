@@ -10,7 +10,7 @@ comment-preserving formatting so you can annotate them by hand.
 mutation.
 
 ```bash
-repo-manager init ~/work/services --name services
+repo init ~/work/services --name services
 ```
 
 Interactively it shows a selectable table with each repository's branch and inferred
@@ -90,10 +90,10 @@ recorded so you can tell a proven default from a heuristic:
 ## Removing a profile
 
 ```bash
-repo-manager forget <name>
+repo remove <name>
 ```
 
-`forget` deletes only the profile's config file. It never touches a repository or the
+`remove` deletes only the profile's config file. It never touches a repository or the
 workspace on disk. It names the exact file it will remove and asks for confirmation
 (`--yes` to skip), and clears the active-project pointer if it referred to that
 profile. There is no command that deletes repositories; that is out of scope by
@@ -101,5 +101,7 @@ design.
 
 ## Storage and overrides
 
-Profiles live under `~/.config/repo-manager/projects/`. Set `REPO_MANAGER_HOME` to
-relocate that directory.
+Projects live under `~/.config/repo/projects/`. On first use, `repo` moves an existing
+`~/.config/repo-manager/` directory to `~/.config/repo/`. If both directories exist,
+the command stops and asks for manual resolution instead of merging files. Set
+`REPO_HOME` to use a different new configuration directory.
