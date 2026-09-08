@@ -336,12 +336,12 @@ class RepositoryService:
         if remote_state.relationship is Relationship.AHEAD:
             return Classification.AHEAD
         if remote_state.relationship is Relationship.BEHIND:
-            # Default-branch inference does not gate update, only switch-default,
+            # Default-branch inference does not gate update, only default and sync,
             # so a behind repo with an unknown default is still update-ready.
             return Classification.READY
 
         # 8. Clean and current. Surface an unresolved default branch only here,
-        # where there is nothing more urgent to report. It gates switch-default.
+        # where there is nothing more urgent to report. It gates default and sync.
         if checkout.default_branch is None:
             return Classification.DEFAULT_BRANCH_UNKNOWN
         return Classification.CURRENT

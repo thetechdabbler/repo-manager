@@ -22,7 +22,7 @@ class Classification(str, Enum):
 
     This is a summary for humans, not an operation decision. Whether a given
     operation may proceed is the policy engine's job (phase 2), because the answer
-    differs per operation: `default-branch-unknown` blocks `switch-default` but not
+    differs per operation: `default-branch-unknown` blocks `default` and `sync` but not
     `update`.
     """
 
@@ -48,7 +48,7 @@ CLASSIFICATION_HELP: dict[str, str] = {
     Classification.IN_PROGRESS.value: "A rebase, merge, cherry-pick, revert, or bisect is in progress. Never mutated.",
     Classification.DETACHED.value: "HEAD points at a commit rather than a branch.",
     Classification.NO_UPSTREAM.value: "The current branch has no tracking configuration.",
-    Classification.DEFAULT_BRANCH_UNKNOWN.value: "The default branch could not be inferred. Blocks switch-default.",
+    Classification.DEFAULT_BRANCH_UNKNOWN.value: "The default branch could not be inferred. Blocks default and sync.",
     Classification.AMBIGUOUS_REMOTE.value: "Several remotes exist and none is named 'origin'. Needs configuration.",
     Classification.AHEAD.value: "Local commits are not on the remote; a fast-forward is not possible.",
     Classification.DIVERGED.value: "Local and upstream have both moved. Needs manual reconciliation.",
@@ -252,7 +252,10 @@ class RepositorySnapshot:
 
 class Operation(str, Enum):
     UPDATE = "update"
-    SWITCH_DEFAULT = "switch-default"
+    DEFAULT = "default"
+    # Internal compatibility for serialized reports created before the CLI cutover.
+    SWITCH_DEFAULT = "default"
+    SYNC = "sync"
     CHECKOUT = "checkout"
 
 
@@ -287,7 +290,8 @@ class OperationResult:
     after_head: str | None = None
     commands: list[str] = field(default_factory=list)
     error: str | None = None
-    # Stash lifecycle (only set when --stash-and-update creates a stash).
+    source_branch: str | None = None
+    # Stash lifecycle (only set when --stash creates a stash).
     stashed: bool = False
     stash_reference: str | None = None
     restore: str | None = None  # "clean" | "conflict" | "error"
@@ -312,6 +316,7 @@ class OperationResult:
             "changed": self.changed,
             "commands": list(self.commands),
             "error": self.error,
+            "source_branch": self.source_branch,
             "stash": {
                 "stashed": self.stashed,
                 "reference": self.stash_reference,
@@ -394,6 +399,48 @@ class StatusReport:
             key = _enum_value(r.classification)
             counts[key] = counts.get(key, 0) + 1
         return dict(sorted(counts.items()))
+
+
+@dataclass
+class ProjectStatus:
+    """Local-only overview counts for one saved project."""
+
+    name: str
+    root: str
+    repositories_total: int
+    clean_count: int
+    dirty_count: int
+    in_progress_count: int
+    missing_worktree_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "root": self.root,
+            "repositories_total": self.repositories_total,
+            "clean_count": self.clean_count,
+            "dirty_count": self.dirty_count,
+            "in_progress_count": self.in_progress_count,
+            "missing_worktree_count": self.missing_worktree_count,
+        }
+
+
+@dataclass
+class ProjectsStatusReport:
+    """The complete result of global `repo status`."""
+
+    generated_at: str
+    projects: list[ProjectStatus] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    schema_version: int = SCHEMA_VERSION
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "generated_at": self.generated_at,
+            "projects": [project.to_dict() for project in self.projects],
+            "warnings": list(self.warnings),
+        }
 
 
 # -- summaries ----------------------------------------------------------------------

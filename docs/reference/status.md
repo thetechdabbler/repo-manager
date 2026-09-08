@@ -1,8 +1,10 @@
 # status
 
-Report the state of every selected repository. Read-only unless `--fetch` is passed.
+`repo status` is a local-only overview of every saved project. It shows the project
+root and counts for child repositories: total, clean, dirty, in progress, and missing
+worktrees. Use `repo <project> status` for repository details.
 
-## What it does
+## Project detail
 
 `status` builds a snapshot of each selected repository: current branch (or detached
 HEAD), upstream, staged / unstaged / untracked counts, ahead and behind counts, and
@@ -17,7 +19,7 @@ refs are never presented as if they were current.
 
 ```mermaid
 flowchart TD
-  A["repo-manager status"] --> B["Resolve profile + select repos"]
+  A["repo <project> status"] --> B["Resolve profile + select repos"]
   B --> C{"--fetch ?"}
   C -- "yes" --> D["git fetch --prune<br/>parallel, with timeout"]
   C -- "no" --> E["Use local refs<br/>ahead/behind = no-fetch"]
@@ -47,16 +49,16 @@ flowchart TD
 | Changes | `Ns` staged, `Nm` modified, `N?` untracked, `Nu` unmerged |
 | Last commit | Short SHA and subject |
 
-## Options
+## Options for project detail
 
---8<-- "reference/_generated/status.md"
+--8<-- "reference/_generated/project-status.md"
 
 ## Examples
 
 ```bash
-repo-manager status                    # local-only, fast
-repo-manager status --fetch            # real ahead/behind
-repo-manager status --group backend    # one group
-repo-manager status --select dirty     # only repos with local work
-repo-manager status --json             # machine-readable
+repo <project> status                    # local-only, fast
+repo <project> status --fetch            # real ahead/behind
+repo <project> status --group backend    # one group
+repo <project> status --select dirty     # only repos with local work
+repo <project> status --json             # machine-readable
 ```

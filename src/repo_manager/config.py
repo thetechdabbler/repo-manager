@@ -4,7 +4,7 @@ Profiles are TOML. Reads use the stdlib `tomllib`; writes use `tomlkit` so any
 comments a user adds by hand survive a rewrite. Global storage follows XDG on
 macOS and Linux:
 
-    ~/.config/repo-manager/
+    ~/.config/repo/
     ├── config.toml            global settings and active project
     └── projects/<name>.toml   one profile per workspace
 """
@@ -12,6 +12,7 @@ macOS and Linux:
 from __future__ import annotations
 
 import os
+import shutil
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -19,6 +20,12 @@ from pathlib import Path
 import tomlkit
 
 SCHEMA_VERSION = 1
+
+# These words are the root-level commands of the public CLI. A project named one
+# of these words would make `repo <project> <command>` ambiguous.
+RESERVED_PROJECT_NAMES = frozenset(
+    {"status", "projects", "init", "remove", "version", "help", "update", "sync", "default", "checkout", "summary"}
+)
 
 
 class ConfigError(Exception):
@@ -80,12 +87,37 @@ class Profile:
 
 
 def config_home() -> Path:
-    override = os.environ.get("REPO_MANAGER_HOME")
+    override = os.environ.get("REPO_HOME")
     if override:
-        return Path(override).expanduser()
+        new_home = Path(override).expanduser()
+        legacy_override = os.environ.get("REPO_MANAGER_HOME")
+        if legacy_override:
+            legacy_home = Path(legacy_override).expanduser()
+            if new_home.exists() and legacy_home.exists() and new_home != legacy_home:
+                raise ConfigError(
+                    f"both configuration directories exist: {new_home} and {legacy_home}. "
+                    "Resolve this manually before running repo."
+                )
+        return new_home
     xdg = os.environ.get("XDG_CONFIG_HOME")
     base = Path(xdg).expanduser() if xdg else Path.home() / ".config"
-    return base / "repo-manager"
+    new_home = base / "repo"
+    legacy_home = Path(os.environ.get("REPO_MANAGER_HOME", base / "repo-manager")).expanduser()
+
+    if new_home.exists() and legacy_home.exists():
+        raise ConfigError(
+            f"both configuration directories exist: {new_home} and {legacy_home}. "
+            "Resolve this manually before running repo."
+        )
+    if not new_home.exists() and legacy_home.exists():
+        new_home.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.move(str(legacy_home), str(new_home))
+        except OSError as exc:
+            raise ConfigError(
+                f"could not migrate configuration from {legacy_home} to {new_home}: {exc}"
+            ) from exc
+    return new_home
 
 
 def projects_dir() -> Path:
@@ -180,6 +212,8 @@ def load_profile_from_path(path: Path) -> Profile:
     if not project or "name" not in project or "root" not in project:
         raise ConfigError(f"profile {path} is missing [project] name/root")
 
+    project_name = str(project["name"])
+    _validate_project_name(project_name)
     root = Path(project["root"]).expanduser()
 
     disc = data.get("discovery", {})
@@ -227,7 +261,7 @@ def load_profile_from_path(path: Path) -> Profile:
         )
 
     return Profile(
-        name=str(project["name"]),
+        name=project_name,
         root=root,
         default_remote=str(project.get("default_remote", "origin")),
         discovery=discovery,
@@ -242,6 +276,17 @@ def _name_from_path(rel: str) -> str:
     if rel in (".", ""):
         return "root"
     return Path(rel).name
+
+
+def _validate_project_name(name: str) -> None:
+    if not name.strip():
+        raise ConfigError("project name cannot be empty")
+    if name in RESERVED_PROJECT_NAMES:
+        words = ", ".join(sorted(RESERVED_PROJECT_NAMES))
+        raise ConfigError(
+            f"project name '{name}' is reserved by the repo command. "
+            f"Choose another name. Reserved words: {words}."
+        )
 
 
 def _validate_within_root(root: Path, rel: str, profile_file: Path) -> None:
@@ -310,6 +355,7 @@ def render_profile(profile: Profile) -> str:
 
 
 def save_profile(profile: Profile) -> Path:
+    _validate_project_name(profile.name)
     path = profile_path(profile.name)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(render_profile(profile), encoding="utf-8")

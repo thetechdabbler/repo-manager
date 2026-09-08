@@ -86,9 +86,10 @@ nav:
       - init: reference/init.md
       - status: reference/status.md
       - update: reference/update.md
-      - switch-default: reference/switch-default.md
+      - default: reference/default.md
+      - sync: reference/sync.md
       - checkout: reference/checkout.md
       - summary: reference/summary.md
-      - forget: reference/forget.md
+      - remove: reference/remove.md
       - Utility commands: reference/utility.md
   - Contributing: contributing.md

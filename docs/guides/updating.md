@@ -11,24 +11,24 @@ a reason.
 branches.
 
 ```bash
-repo-manager update --dry-run     # preview the plan, change nothing
-repo-manager update --yes         # execute
-repo-manager update --group libraries --yes
+repo <project> update --dry-run     # preview the plan, change nothing
+repo <project> update --yes         # execute
+repo <project> update --group libraries --yes
 ```
 
 Only `ready` repositories (clean, tracking, behind) are updated. See the
 [policy table](../concepts/safety-model.md#policy-by-operation) for what happens in
 every other state.
 
-## `switch-default` — return to the default branch
+## `default` — return to the default branch
 
-`switch-default` switches each repository to its configured default branch and
+`default` switches each repository to its configured default branch and
 fast-forwards it. Useful for returning a whole workspace to a clean baseline after
 feature work.
 
 ```bash
-repo-manager switch-default --dry-run
-repo-manager switch-default --select clean --yes
+repo <project> default --dry-run
+repo <project> default --select clean --yes
 ```
 
 If the default branch itself has diverged from its upstream, the repository is

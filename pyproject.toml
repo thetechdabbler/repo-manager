@@ -21,7 +21,7 @@ Documentation = "https://thetechdabbler.github.io/repo-manager/"
 Issues = "https://github.com/thetechdabbler/repo-manager/issues"
 
 [project.scripts]
-repo-manager = "repo_manager.cli:main"
+repo = "repo_manager.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

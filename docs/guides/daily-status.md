@@ -3,7 +3,7 @@
 `status` is the command you run most. It is read-only.
 
 ```bash
-repo-manager status
+repo <project> status
 ```
 
 Without a network call it reports each repository's branch, cleanliness, and last
@@ -15,7 +15,7 @@ stale remote-tracking references as if they were current.
 Pass `--fetch` to update remote-tracking refs first:
 
 ```bash
-repo-manager status --fetch
+repo <project> status --fetch
 ```
 
 Fetches run in parallel (see `--jobs`) and each has a timeout, so an unreachable or
@@ -24,9 +24,9 @@ credential-gated remote reports `remote-unavailable` rather than hanging the run
 ## Narrowing the view
 
 ```bash
-repo-manager status --group backend        # one group
-repo-manager status --repo api             # one repository
-repo-manager status --select dirty         # only repos with local work
+repo <project> status --group backend        # one group
+repo <project> status --repo api             # one repository
+repo <project> status --select dirty         # only repos with local work
 ```
 
 `--select` accepts a comma-separated union of tokens: `all`, `clean`, any state name
@@ -35,7 +35,7 @@ repo-manager status --select dirty         # only repos with local work
 ## Machine-readable output
 
 ```bash
-repo-manager status --json
+repo <project> status --json
 ```
 
 The JSON is a stable, versioned structure (`schema_version`). It is the contract for

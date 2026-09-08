@@ -15,7 +15,7 @@ first-parent, on each repository's HEAD.
 
 ```mermaid
 flowchart TD
-  A["repo-manager summary --since W"] --> B["Resolve W → git date<br/>(7d, 2w, 24h, ISO date, 'yesterday')"]
+  A["repo <project> summary --since W"] --> B["Resolve W → git date<br/>(7d, 2w, 24h, ISO date, 'yesterday')"]
   B --> C["Per repo, in parallel:<br/>git log --first-parent --since --numstat"]
   C --> D["Parse commits + file stats<br/>detect ticket keys and types"]
   D --> E["Aggregate per repo and across workspace"]
@@ -54,8 +54,8 @@ Per repository and aggregated:
 ## Examples
 
 ```bash
-repo-manager summary --since 7d
-repo-manager summary --since 2026-07-01 --group backend
-repo-manager summary --since 7d --markdown standup.md
-repo-manager summary --since 2w --select changed --json
+repo <project> summary --since 7d
+repo <project> summary --since 2026-07-01 --group backend
+repo <project> summary --since 7d --markdown standup.md
+repo <project> summary --since 2w --select changed --json
 ```

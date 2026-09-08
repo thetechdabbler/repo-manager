@@ -4,9 +4,9 @@
 produces the same structured report in terminal, JSON, and Markdown form.
 
 ```bash
-repo-manager summary --since 7d
-repo-manager summary --since 2026-07-01 --group backend
-repo-manager summary --since 7d --markdown report.md
+repo <project> summary --since 7d
+repo <project> summary --since 2026-07-01 --group backend
+repo <project> summary --since 7d --markdown report.md
 ```
 
 ## The window

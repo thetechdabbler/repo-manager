@@ -18,7 +18,7 @@ is modified.
 
 ```mermaid
 flowchart TD
-  A["repo-manager init PATH"] --> B["Walk PATH to max-depth<br/>skip excluded dirs"]
+  A["repo init PATH"] --> B["Walk PATH to max-depth<br/>skip excluded dirs"]
   B --> C["Find directories with a .git"]
   C --> D["Read branch and origin<br/>infer default branch + evidence"]
   D --> E{"--yes ?"}
@@ -75,16 +75,16 @@ The setting is saved to the profile as `discovery.descend_into_repositories`.
 
 ```bash
 # Interactive: scan, pick repositories, review, then save.
-repo-manager init ~/work/services --name services
+repo init ~/work/services --name services
 
 # Non-interactive: take everything discovered.
-repo-manager init ~/work/services --name services --yes
+repo init ~/work/services --name services --yes
 
 # Shallow scan against a non-origin remote.
-repo-manager init ~/work/services --max-depth 2 --remote upstream --yes
+repo init ~/work/services --max-depth 2 --remote upstream --yes
 
 # Umbrella repo: the root is itself a git repo holding independent clones.
-repo-manager init ~/work/services-env --name services --include-nested
+repo init ~/work/services-env --name services --include-nested
 ```
 
 See [Configuration](../concepts/configuration.md) for the profile schema and the full

@@ -13,11 +13,11 @@ command never blocks on the network mid-operation.
 
 ```mermaid
 flowchart TD
-  A["repo-manager update"] --> B["git fetch --prune<br/>parallel"]
+  A["repo <project> update"] --> B["git fetch --prune<br/>parallel"]
   B --> C{"Per repo: state?"}
   C -- "ready (clean, behind)" --> D["git merge --ff-only"]
   C -- "current" --> E["No-op, already up to date"]
-  C -- "dirty" --> F{"--stash-and-update ?"}
+  C -- "dirty" --> F{"--stash ?"}
   C -- "detached / diverged /<br/>ahead / no-upstream" --> S["Skip with reason + next action"]
   F -- "yes" --> G["stash → ff → restore"]
   F -- "no" --> S
@@ -34,13 +34,13 @@ flowchart TD
 A clean fast-forwardable branch is the only default mutation case. See the
 [policy table](../concepts/safety-model.md#policy-by-operation) for what happens in
 every state, and [Recovering local work](../guides/recovery.md) for the
-`--stash-and-update` lifecycle.
+`--stash` lifecycle.
 
 ## How the options change it
 
 - **`--dry-run`** runs the fetch and the decision, prints the plan, and executes no
   mutation. The safest way to preview.
-- **`--stash-and-update`** lets a *dirty* repository update anyway: it stashes local
+- **`--stash`** lets a *dirty* repository update anyway: it stashes local
   work (including untracked files), fast-forwards, then restores. A conflicting
   restore keeps the stash and prints recovery commands. It never touches an
   in-progress repository.
@@ -63,8 +63,8 @@ every state, and [Recovering local work](../guides/recovery.md) for the
 ## Examples
 
 ```bash
-repo-manager update --dry-run                 # preview, change nothing
-repo-manager update --yes                      # fast-forward the eligible repos
-repo-manager update --group backend --yes
-repo-manager update --stash-and-update --repo api --yes
+repo <project> update --dry-run                 # preview, change nothing
+repo <project> update --yes                      # fast-forward the eligible repos
+repo <project> update --group backend --yes
+repo <project> update --stash --repo api --yes
 ```
