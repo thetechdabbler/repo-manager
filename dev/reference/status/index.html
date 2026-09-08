@@ -27,7 +27,7 @@
     
     
       
-        <title>status - repo-manager</title>
+        <title>status - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -778,6 +778,8 @@
       
         
       
+        
+      
     
     
     
@@ -930,10 +932,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#project-detail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it does
+        Project detail
       
     </span>
   </a>
@@ -963,10 +965,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+  <a href="#options-for-project-detail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        Options for project detail
       
     </span>
   </a>
@@ -1028,14 +1030,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../switch-default/" class="md-nav__link">
+      <a href="../default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1112,14 +1142,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../forget/" class="md-nav__link">
+      <a href="../remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1222,10 +1252,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-it-does" class="md-nav__link">
+  <a href="#project-detail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What it does
+        Project detail
       
     </span>
   </a>
@@ -1255,10 +1285,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+  <a href="#options-for-project-detail" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        Options for project detail
       
     </span>
   </a>
@@ -1297,8 +1327,10 @@
 
 
 <h1 id="status">status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h1>
-<p>Report the state of every selected repository. Read-only unless <code>--fetch</code> is passed.</p>
-<h2 id="what-it-does">What it does<a class="headerlink" href="#what-it-does" title="Permanent link">&para;</a></h2>
+<p><code>repo status</code> is a local-only overview of every saved project. It shows the project
+root and counts for child repositories: total, clean, dirty, in progress, and missing
+worktrees. Use <code>repo &lt;project&gt; status</code> for repository details.</p>
+<h2 id="project-detail">Project detail<a class="headerlink" href="#project-detail" title="Permanent link">&para;</a></h2>
 <p><code>status</code> builds a snapshot of each selected repository: current branch (or detached
 HEAD), upstream, staged / unstaged / untracked counts, ahead and behind counts, and
 any in-progress operation. It reduces each to one <a href="../../concepts/safety-model/">state</a>
@@ -1309,7 +1341,7 @@ fetched in parallel first (each with a timeout), so an unreachable or credential
 remote becomes <code>remote-unavailable</code> instead of hanging the run. Stale remote-tracking
 refs are never presented as if they were current.</p>
 <pre class="mermaid"><code>flowchart TD
-  A["repo-manager status"] --&gt; B["Resolve profile + select repos"]
+  A["repo &lt;project&gt; status"] --&gt; B["Resolve profile + select repos"]
   B --&gt; C{"--fetch ?"}
   C -- "yes" --&gt; D["git fetch --prune&lt;br/&gt;parallel, with timeout"]
   C -- "no" --&gt; E["Use local refs&lt;br/&gt;ahead/behind = no-fetch"]
@@ -1358,10 +1390,10 @@ refs are never presented as if they were current.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h2 id="options-for-project-detail">Options for project detail<a class="headerlink" href="#options-for-project-detail" title="Permanent link">&para;</a></h2>
 <!-- GENERATED by scripts/gen_docs.py. Do not edit by hand; run `python scripts/gen_docs.py` and commit the result. -->
 
-<div class="highlight"><pre><span></span><code>repo-manager status [OPTIONS]
+<div class="highlight"><pre><span></span><code>repo &lt;project&gt; status [OPTIONS]
 </code></pre></div>
 <p><strong>Options</strong></p>
 <table>
@@ -1372,10 +1404,6 @@ refs are never presented as if they were current.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><code>--project</code></td>
-<td>Profile name; defaults to active.</td>
-</tr>
 <tr>
 <td><code>--group</code></td>
 <td>Limit to a repository group.</td>
@@ -1403,11 +1431,11 @@ refs are never presented as if they were current.</p>
 </tbody>
 </table>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status<span class="w">                    </span><span class="c1"># local-only, fast</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--fetch<span class="w">            </span><span class="c1"># real ahead/behind</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--group<span class="w"> </span>backend<span class="w">    </span><span class="c1"># one group</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--select<span class="w"> </span>dirty<span class="w">     </span><span class="c1"># only repos with local work</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--json<span class="w">             </span><span class="c1"># machine-readable</span>
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w">                    </span><span class="c1"># local-only, fast</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--fetch<span class="w">            </span><span class="c1"># real ahead/behind</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--group<span class="w"> </span>backend<span class="w">    </span><span class="c1"># one group</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--select<span class="w"> </span>dirty<span class="w">     </span><span class="c1"># only repos with local work</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--json<span class="w">             </span><span class="c1"># machine-readable</span>
 </code></pre></div>
 
 

@@ -27,7 +27,7 @@
     
     
       
-        <title>Summaries - repo-manager</title>
+        <title>Summaries - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -872,6 +872,8 @@
       
         
       
+        
+      
     
     
     
@@ -1017,14 +1019,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/switch-default/" class="md-nav__link">
+      <a href="../../reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1101,14 +1131,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/forget/" class="md-nav__link">
+      <a href="../../reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1277,9 +1307,9 @@
 <h1 id="summaries">Summaries<a class="headerlink" href="#summaries" title="Permanent link">&para;</a></h1>
 <p><code>summary</code> answers "what changed across the workspace recently?" It is read-only and
 produces the same structured report in terminal, JSON, and Markdown form.</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d
-repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span><span class="m">2026</span>-07-01<span class="w"> </span>--group<span class="w"> </span>backend
-repo-manager<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d<span class="w"> </span>--markdown<span class="w"> </span>report.md
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span><span class="m">2026</span>-07-01<span class="w"> </span>--group<span class="w"> </span>backend
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>summary<span class="w"> </span>--since<span class="w"> </span>7d<span class="w"> </span>--markdown<span class="w"> </span>report.md
 </code></pre></div>
 <h2 id="the-window">The window<a class="headerlink" href="#the-window" title="Permanent link">&para;</a></h2>
 <p><code>--since</code> accepts duration shorthand (<code>7d</code>, <code>2w</code>, <code>24h</code>), an ISO date

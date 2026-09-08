@@ -27,7 +27,7 @@
     
     
       
-        <title>Configuration - repo-manager</title>
+        <title>Configuration - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -911,6 +911,8 @@
       
         
       
+        
+      
     
     
     
@@ -1056,14 +1058,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/switch-default/" class="md-nav__link">
+      <a href="../../reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1140,14 +1170,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/forget/" class="md-nav__link">
+      <a href="../../reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1359,7 +1389,7 @@ comment-preserving formatting so you can annotate them by hand.</p>
 <h2 id="creating-a-profile">Creating a profile<a class="headerlink" href="#creating-a-profile" title="Permanent link">&para;</a></h2>
 <p><code>init</code> discovers repositories and writes the profile for you. It performs no git
 mutation.</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>init<span class="w"> </span>~/work/services<span class="w"> </span>--name<span class="w"> </span>services
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>init<span class="w"> </span>~/work/services<span class="w"> </span>--name<span class="w"> </span>services
 </code></pre></div>
 <p>Interactively it shows a selectable table with each repository's branch and inferred
 default. Non-interactively, <code>--yes</code> selects everything discovered.</p>
@@ -1367,19 +1397,19 @@ default. Non-interactively, <code>--yes</code> selects everything discovered.</p
 <div class="highlight"><pre><span></span><code><span class="n">schema_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span>
 
 <span class="k">[project]</span>
-<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;services&quot;</span>
-<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/Users/alex/work/services&quot;</span>
-<span class="n">default_remote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;origin&quot;</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"services"</span>
+<span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/Users/alex/work/services"</span>
+<span class="n">default_remote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"origin"</span>
 
 <span class="k">[discovery]</span>
 <span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span>
 <span class="n">include_root_repository</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;.git&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;.venv&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;node_modules&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;.pytest_cache&quot;</span><span class="p">]</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">".git"</span><span class="p">,</span><span class="w"> </span><span class="s2">".venv"</span><span class="p">,</span><span class="w"> </span><span class="s2">"node_modules"</span><span class="p">,</span><span class="w"> </span><span class="s2">"outputs"</span><span class="p">,</span><span class="w"> </span><span class="s2">".pytest_cache"</span><span class="p">]</span>
 <span class="n">include_linked_worktrees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 <span class="n">descend_into_repositories</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 
 <span class="k">[policy]</span>
-<span class="n">pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;ff-only&quot;</span>
+<span class="n">pull_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ff-only"</span>
 <span class="n">skip_dirty</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">fetch_before_update</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">fetch_before_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
@@ -1387,16 +1417,16 @@ default. Non-interactively, <code>--yes</code> selects everything discovered.</p
 <span class="n">jobs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8</span>
 
 <span class="k">[[repositories]]</span>
-<span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;.&quot;</span>
-<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;workspace-root&quot;</span>
-<span class="n">default_branch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;main&quot;</span>
-<span class="n">groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;root&quot;</span><span class="p">]</span>
+<span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"."</span>
+<span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"workspace-root"</span>
+<span class="n">default_branch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"main"</span>
+<span class="n">groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"root"</span><span class="p">]</span>
 
 <span class="k">[[repositories]]</span>
-<span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;services/payments-api&quot;</span>
-<span class="n">default_branch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;dev&quot;</span>
-<span class="n">groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;services&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;payments&quot;</span><span class="p">]</span>
-<span class="n">remote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;origin&quot;</span>
+<span class="n">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"services/payments-api"</span>
+<span class="n">default_branch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"dev"</span>
+<span class="n">groups</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"services"</span><span class="p">,</span><span class="w"> </span><span class="s2">"payments"</span><span class="p">]</span>
+<span class="n">remote</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"origin"</span>
 </code></pre></div>
 <h3 id="repositories">Repositories<a class="headerlink" href="#repositories" title="Permanent link">&para;</a></h3>
 <p>Each <code>[[repositories]]</code> entry has a <code>path</code> relative to <code>root</code> (paths outside the root
@@ -1425,16 +1455,18 @@ recorded so you can tell a proven default from a heuristic:</p>
    set the value.</li>
 </ol>
 <h2 id="removing-a-profile">Removing a profile<a class="headerlink" href="#removing-a-profile" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>forget<span class="w"> </span>&lt;name&gt;
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>remove<span class="w"> </span>&lt;name&gt;
 </code></pre></div>
-<p><code>forget</code> deletes only the profile's config file. It never touches a repository or the
+<p><code>remove</code> deletes only the profile's config file. It never touches a repository or the
 workspace on disk. It names the exact file it will remove and asks for confirmation
 (<code>--yes</code> to skip), and clears the active-project pointer if it referred to that
 profile. There is no command that deletes repositories; that is out of scope by
 design.</p>
 <h2 id="storage-and-overrides">Storage and overrides<a class="headerlink" href="#storage-and-overrides" title="Permanent link">&para;</a></h2>
-<p>Profiles live under <code>~/.config/repo-manager/projects/</code>. Set <code>REPO_MANAGER_HOME</code> to
-relocate that directory.</p>
+<p>Projects live under <code>~/.config/repo/projects/</code>. On first use, <code>repo</code> moves an existing
+<code>~/.config/repo-manager/</code> directory to <code>~/.config/repo/</code>. If both directories exist,
+the command stops and asks for manual resolution instead of merging files. Set
+<code>REPO_HOME</code> to use a different new configuration directory.</p>
 
 
 

@@ -27,7 +27,7 @@
     
     
       
-        <title>Daily status - repo-manager</title>
+        <title>Daily status - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -872,6 +872,8 @@
       
         
       
+        
+      
     
     
     
@@ -1017,14 +1019,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/switch-default/" class="md-nav__link">
+      <a href="../../reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1101,14 +1131,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/forget/" class="md-nav__link">
+      <a href="../../reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1276,30 +1306,51 @@
 
 <h1 id="daily-status">Daily status<a class="headerlink" href="#daily-status" title="Permanent link">&para;</a></h1>
 <p><code>status</code> is the command you run most. It is read-only.</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status
+<p>There are two status views:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># All saved projects, local-only counts, no fetch.</span>
+repo<span class="w"> </span>status
+
+<span class="c1"># Detailed child-repository status for one project.</span>
+repo<span class="w"> </span>core<span class="w"> </span>status
+</code></pre></div>
+<p>The global view reports the project root, total child repositories, clean count, dirty
+count, in-progress count, and missing-worktree count. It does not fetch. The detailed
+view reports each saved repository name, relative path, current branch, state, local
+changes, and commit information.</p>
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status
 </code></pre></div>
 <p>Without a network call it reports each repository's branch, cleanliness, and last
 commit. The ahead/behind column shows <code>no-fetch</code>, because the tool refuses to present
 stale remote-tracking references as if they were current.</p>
 <h2 id="getting-real-aheadbehind-numbers">Getting real ahead/behind numbers<a class="headerlink" href="#getting-real-aheadbehind-numbers" title="Permanent link">&para;</a></h2>
 <p>Pass <code>--fetch</code> to update remote-tracking refs first:</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status<span class="w"> </span>--fetch
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--fetch
 </code></pre></div>
 <p>Fetches run in parallel (see <code>--jobs</code>) and each has a timeout, so an unreachable or
 credential-gated remote reports <code>remote-unavailable</code> rather than hanging the run.</p>
 <h2 id="narrowing-the-view">Narrowing the view<a class="headerlink" href="#narrowing-the-view" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status<span class="w"> </span>--group<span class="w"> </span>backend<span class="w">        </span><span class="c1"># one group</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--repo<span class="w"> </span>api<span class="w">             </span><span class="c1"># one repository</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--select<span class="w"> </span>dirty<span class="w">         </span><span class="c1"># only repos with local work</span>
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--group<span class="w"> </span>backend<span class="w">        </span><span class="c1"># one group</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--repo<span class="w"> </span>api<span class="w">             </span><span class="c1"># one repository</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--select<span class="w"> </span>dirty<span class="w">         </span><span class="c1"># only repos with local work</span>
 </code></pre></div>
 <p><code>--select</code> accepts a comma-separated union of tokens: <code>all</code>, <code>clean</code>, any state name
 (<code>dirty</code>, <code>ready</code>, <code>ahead</code>, ...), <code>group:NAME</code>, <code>search:TEXT</code>, and <code>name:NAME</code>.</p>
 <h2 id="machine-readable-output">Machine-readable output<a class="headerlink" href="#machine-readable-output" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>status<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>status<span class="w"> </span>--json
 </code></pre></div>
 <p>The JSON is a stable, versioned structure (<code>schema_version</code>). It is the contract for
 scripts and for any tooling built on top of the CLI; the terminal table is just one
 rendering of the same report.</p>
+<p>For example, a project with one root repository and two child repositories may show:</p>
+<div class="highlight"><pre><span></span><code>Project  Root                         Repos  Clean  Dirty  In progress  Missing
+core     /Users/mchoudhary/docker-env      3      2      1            0        0
+</code></pre></div>
+<p>The detailed view then makes the paths explicit:</p>
+<div class="highlight"><pre><span></span><code>Name                  Path                    Branch  State
+root                  .                       main    dirty
+Entrata               Entrata                 dev     current
+LeaseManagement       LeaseManagement         main    current
+</code></pre></div>
 <h2 id="reading-the-columns">Reading the columns<a class="headerlink" href="#reading-the-columns" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

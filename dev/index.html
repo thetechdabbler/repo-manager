@@ -25,7 +25,7 @@
     
     
       
-        <title>repo-manager</title>
+        <title>repo</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#repo-manager" class="md-skip">
+        <a href="#repo" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="assets/logo.svg" alt="logo">
 
@@ -107,7 +107,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -367,12 +367,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -843,6 +843,8 @@
       
         
       
+        
+      
     
     
     
@@ -988,14 +990,42 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/switch-default/" class="md-nav__link">
+      <a href="reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1072,14 +1102,14 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/forget/" class="md-nav__link">
+      <a href="reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1225,7 +1255,7 @@
 
 <div class="rm-hero">
 <p><span class="rm-eyebrow">Multi-repo git, safely</span></p>
-<h1 id="repo-manager">repo-manager<a class="headerlink" href="#repo-manager" title="Permanent link">&para;</a></h1>
+<h1 id="repo">repo<a class="headerlink" href="#repo" title="Permanent link">&para;</a></h1>
 <p>One workspace, many repositories, no surprises. Inspect, update, and summarize a tree
 of independent Git repos. Only clean, fast-forwardable repos ever change, and every
 skip tells you why.</p>
@@ -1273,20 +1303,23 @@ skipped, and every skip states why and what to do next. A skipped repository is 
 result, not a failure to hide.</p>
 <div class="highlight"><pre><span></span><code>SKIPPED  services/payments-api
 Reason:  4 local change(s) would be at risk
-Next:    commit or stash the changes, or use --stash-and-update
+Next:    commit or stash the changes, or use --stash
 </code></pre></div>
 <h2 id="60-second-tour">60-second tour<a class="headerlink" href="#60-second-tour" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="c1"># Scan a workspace and save a profile (no git mutation).</span>
-repo-manager<span class="w"> </span>init<span class="w"> </span>~/work/services<span class="w"> </span>--name<span class="w"> </span>services<span class="w"> </span>--yes
+repo<span class="w"> </span>init<span class="w"> </span>~/work/services<span class="w"> </span>--name<span class="w"> </span>services<span class="w"> </span>--yes
 
-<span class="c1"># See the state of every repository.</span>
-repo-manager<span class="w"> </span>status<span class="w"> </span>--fetch
+<span class="c1"># See a local overview of every saved project.</span>
+repo<span class="w"> </span>status
+
+<span class="c1"># See detailed state for one project.</span>
+repo<span class="w"> </span>services<span class="w"> </span>status<span class="w"> </span>--fetch
 
 <span class="c1"># Preview a safe update: what would change, and why the rest is skipped.</span>
-repo-manager<span class="w"> </span>update<span class="w"> </span>--dry-run
+repo<span class="w"> </span>services<span class="w"> </span>update<span class="w"> </span>--dry-run
 
 <span class="c1"># Fast-forward the eligible repositories.</span>
-repo-manager<span class="w"> </span>update<span class="w"> </span>--yes
+repo<span class="w"> </span>services<span class="w"> </span>update<span class="w"> </span>--yes
 </code></pre></div>
 <p>See <a href="installation/">Installation</a> to get started, or the
 <a href="concepts/safety-model/">Safety model</a> for exactly what is and is not touched.</p>

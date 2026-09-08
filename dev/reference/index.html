@@ -27,7 +27,7 @@
     
     
       
-        <title>Overview - repo-manager</title>
+        <title>Overview - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href=".." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href=".." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -778,6 +778,8 @@
       
         
       
+        
+      
     
     
     
@@ -926,14 +928,42 @@
   
   
     <li class="md-nav__item">
-      <a href="switch-default/" class="md-nav__link">
+      <a href="default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1010,14 +1040,14 @@
   
   
     <li class="md-nav__item">
-      <a href="forget/" class="md-nav__link">
+      <a href="remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1162,7 +1192,7 @@
 
 
 <h1 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h1>
-<p><code>repo-manager</code> has a small, explicit command set. Read-only commands never change a
+<p><code>repo</code> has a small, explicit command set. Read-only commands never change a
 repository. Mutating commands change only the repositories you select, and only when
 they are safe to touch.</p>
 <table>
@@ -1185,12 +1215,17 @@ they are safe to touch.</p>
 <td>No</td>
 </tr>
 <tr>
+<td><a href="sync/"><code>sync</code></a></td>
+<td>Integrate the remote default branch into the current branch</td>
+<td>Yes</td>
+</tr>
+<tr>
 <td><a href="update/"><code>update</code></a></td>
 <td>Fast-forward the current branch</td>
 <td>Yes</td>
 </tr>
 <tr>
-<td><a href="switch-default/"><code>switch-default</code></a></td>
+<td><a href="default/"><code>default</code></a></td>
 <td>Switch to the default branch and fast-forward</td>
 <td>Yes</td>
 </tr>
@@ -1205,13 +1240,13 @@ they are safe to touch.</p>
 <td>No</td>
 </tr>
 <tr>
-<td><a href="forget/"><code>forget</code></a></td>
+<td><a href="remove/"><code>remove</code></a></td>
 <td>Remove a saved profile (config only)</td>
 <td>No</td>
 </tr>
 <tr>
 <td><a href="utility/">Utility</a></td>
-<td><code>profiles</code>, <code>version</code>, <code>help</code></td>
+<td><code>projects</code>, <code>version</code>, <code>help</code></td>
 <td>No</td>
 </tr>
 </tbody>
@@ -1225,7 +1260,7 @@ they are safe to touch.</p>
   state name (<code>ready</code>, <code>dirty</code>, <code>ahead</code>, ...), <code>group:NAME</code>, <code>search:TEXT</code>,
   <code>name:NAME</code>, or a bare name or path.</li>
 </ul>
-<p>With no selector, a command targets every repository in the active profile.</p>
+<p>With no selector, a project command targets every repository in the named project.</p>
 <h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <p>Mutating commands return the highest-severity applicable code, and every per-repository
 result stays in the output regardless.</p>

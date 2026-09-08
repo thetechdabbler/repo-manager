@@ -2,74 +2,78 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/contributing/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/installation/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/concepts/configuration/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/concepts/safety-model/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/guides/daily-status/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/guides/recovery/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/guides/summaries/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/guides/updating/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/checkout/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
-         <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/forget/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/default/</loc>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/init/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
+    </url>
+    <url>
+         <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/remove/</loc>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/status/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/summary/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
-         <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/switch-default/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/sync/</loc>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/update/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
     <url>
          <loc>https://thetechdabbler.github.io/repo-manager/dev/reference/utility/</loc>
-         <lastmod>2026-08-08</lastmod>
+         <lastmod>2026-09-08</lastmod>
     </url>
 </urlset>

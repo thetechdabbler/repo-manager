@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://thetechdabbler.github.io/repo-manager/dev/guides/recovery/">
+        <link rel="canonical" href="https://thetechdabbler.github.io/repo-manager/dev/reference/sync/">
       
       
-        <link rel="prev" href="../updating/">
+        <link rel="prev" href="../default/">
       
       
-        <link rel="next" href="../summaries/">
+        <link rel="next" href="../checkout/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Recovering local work - repo</title>
+        <title>sync - repo</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#recovering-local-work" class="md-skip">
+        <a href="#sync" class="md-skip">
           Skip to content
         </a>
       
@@ -115,7 +115,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Recovering local work
+              sync
             
           </span>
         </div>
@@ -258,13 +258,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../daily-status/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../guides/daily-status/" class="md-tabs__link">
           
   
   
@@ -304,11 +302,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -449,10 +449,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -468,22 +466,19 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -501,7 +496,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -519,7 +514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../daily-status/" class="md-nav__link">
+      <a href="../../guides/daily-status/" class="md-nav__link">
         
   
   
@@ -547,7 +542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../updating/" class="md-nav__link">
+      <a href="../../guides/updating/" class="md-nav__link">
         
   
   
@@ -572,37 +567,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Recovering local work
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../guides/recovery/" class="md-nav__link">
         
   
   
@@ -618,59 +586,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#when-the-restore-is-clean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When the restore is clean
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#when-the-restore-conflicts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When the restore conflicts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-never-stashed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is never stashed
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -683,7 +598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../summaries/" class="md-nav__link">
+      <a href="../../guides/summaries/" class="md-nav__link">
         
   
   
@@ -836,6 +751,8 @@
       
   
   
+    
+  
   
   
     
@@ -867,20 +784,23 @@
     
     
       
+        
+        
+      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../reference/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   
@@ -898,13 +818,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -924,7 +844,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/init/" class="md-nav__link">
+      <a href="../init/" class="md-nav__link">
         
   
   
@@ -952,7 +872,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/status/" class="md-nav__link">
+      <a href="../status/" class="md-nav__link">
         
   
   
@@ -980,7 +900,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/update/" class="md-nav__link">
+      <a href="../update/" class="md-nav__link">
         
   
   
@@ -1008,7 +928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/default/" class="md-nav__link">
+      <a href="../default/" class="md-nav__link">
         
   
   
@@ -1033,10 +953,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../reference/sync/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1052,6 +981,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1064,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/checkout/" class="md-nav__link">
+      <a href="../checkout/" class="md-nav__link">
         
   
   
@@ -1092,7 +1022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/summary/" class="md-nav__link">
+      <a href="../summary/" class="md-nav__link">
         
   
   
@@ -1120,7 +1050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/remove/" class="md-nav__link">
+      <a href="../remove/" class="md-nav__link">
         
   
   
@@ -1148,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/utility/" class="md-nav__link">
+      <a href="../utility/" class="md-nav__link">
         
   
   
@@ -1223,47 +1153,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#when-the-restore-is-clean" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When the restore is clean
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#when-the-restore-conflicts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        When the restore conflicts
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-never-stashed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is never stashed
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1282,44 +1171,73 @@
   
 
 
-<h1 id="recovering-local-work">Recovering local work<a class="headerlink" href="#recovering-local-work" title="Permanent link">&para;</a></h1>
-<p>By default, a dirty repository is skipped by <code>update</code> and <code>default</code> so your
-local work is never touched. When you do want to update on top of local changes,
-<code>--stash</code> is the opt-in, conflict-safe path.</p>
-<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>update<span class="w"> </span>--stash<span class="w"> </span>--group<span class="w"> </span>backend
-repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>default<span class="w"> </span>--stash<span class="w"> </span>--repo<span class="w"> </span>api
+<h1 id="sync">sync<a class="headerlink" href="#sync" title="Permanent link">&para;</a></h1>
+<p><code>repo &lt;project&gt; sync</code> fetches each selected repository, then integrates its fetched
+remote default branch into the branch already checked out. The default strategy is a
+merge. <code>--rebase</code> is explicit.</p>
+<p>Dirty repositories, detached heads, Git operations in progress, unavailable or
+ambiguous remotes, and unknown default branches are skipped. Sync never stashes.
+When merge or rebase has a conflict, the conflict stays in the repository for manual
+resolution and other repositories continue processing.</p>
+<!-- GENERATED by scripts/gen_docs.py. Do not edit by hand; run `python scripts/gen_docs.py` and commit the result. -->
+
+<div class="highlight"><pre><span></span><code>repo &lt;project&gt; sync [OPTIONS]
 </code></pre></div>
-<p>For each dirty repository that is otherwise fast-forwardable, it:</p>
-<ol>
-<li>Creates a uniquely named stash, including untracked files.</li>
-<li>Fast-forwards using the normal safe path (<code>default</code> also switches branch first).</li>
-<li>Restores the stash.</li>
-<li>Reports whether the restore was clean or conflicted.</li>
-</ol>
-<h2 id="when-the-restore-is-clean">When the restore is clean<a class="headerlink" href="#when-the-restore-is-clean" title="Permanent link">&para;</a></h2>
-<p>The stash is applied and dropped, the repository shows as <code>updated</code>, and your local
-changes sit on top of the freshly fast-forwarded branch. Nothing more to do.</p>
-<h2 id="when-the-restore-conflicts">When the restore conflicts<a class="headerlink" href="#when-the-restore-conflicts" title="Permanent link">&para;</a></h2>
-<p>The stash is <strong>never dropped</strong> on a conflict. The repository is reported as <code>failed</code>,
-and the result carries the exact recovery commands:</p>
-<div class="highlight"><pre><span></span><code>FAILED  services/payments-api
-Error:  the operation succeeded but restoring your local changes conflicted
-Next:   your changes are safe in a stash. Inspect with
-        `git -C &lt;path&gt; stash list` (entry: 'repo-manager auto-stash: ...');
-        re-apply after resolving with `git -C &lt;path&gt; stash pop stash@{0}`
+<p><strong>Options</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--group</code></td>
+<td>Limit to a repository group.</td>
+</tr>
+<tr>
+<td><code>--repo</code></td>
+<td>Limit to one repository.</td>
+</tr>
+<tr>
+<td><code>--select</code></td>
+<td>Selection expression.</td>
+</tr>
+<tr>
+<td><code>--rebase</code></td>
+<td>Rebase instead of merging.</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Preview; make no changes.</td>
+</tr>
+<tr>
+<td><code>--yes</code>, <code>-y</code></td>
+<td>Skip the confirmation prompt.</td>
+</tr>
+<tr>
+<td><code>--ignore-skips</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--jobs</code></td>
+<td>Parallel workers for fetches.</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Emit JSON instead of a table.</td>
+</tr>
+<tr>
+<td><code>--help</code></td>
+<td>Show this message and exit.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>services<span class="w"> </span>sync<span class="w"> </span>--dry-run
+repo<span class="w"> </span>services<span class="w"> </span>sync<span class="w"> </span>--yes
+repo<span class="w"> </span>services<span class="w"> </span>sync<span class="w"> </span>--rebase<span class="w"> </span>--repo<span class="w"> </span>api<span class="w"> </span>--yes
 </code></pre></div>
-<p>The fast-forward still happened; your uncommitted work is preserved in the named stash
-and can be recovered at any time. In <code>--json</code> output the same information is available
-under each result's <code>stash</code> object (<code>stashed</code>, <code>reference</code>, <code>restore</code>).</p>
-<h2 id="what-is-never-stashed">What is never stashed<a class="headerlink" href="#what-is-never-stashed" title="Permanent link">&para;</a></h2>
-<p>Stashing only applies to a <code>dirty</code> repository whose branch can fast-forward. Anything
-that stashing cannot make updatable is still skipped with a reason:</p>
-<ul>
-<li>A repository mid rebase, merge, cherry-pick, revert, or bisect (<code>in-progress</code>) is
-  never touched, even with this flag.</li>
-<li>A <code>diverged</code> or <code>ahead</code> branch, where a fast-forward is impossible regardless of the
-  working tree.</li>
-</ul>
 
 
 
@@ -1355,7 +1273,7 @@ that stashing cannot make updatable is still skipped with a reason:</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../updating/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Updating">
+          <a href="../default/" class="md-footer__link md-footer__link--prev" aria-label="Previous: default">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1365,20 +1283,20 @@ that stashing cannot make updatable is still skipped with a reason:</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Updating
+                default
               </div>
             </div>
           </a>
         
         
           
-          <a href="../summaries/" class="md-footer__link md-footer__link--next" aria-label="Next: Summaries">
+          <a href="../checkout/" class="md-footer__link md-footer__link--next" aria-label="Next: checkout">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Summaries
+                checkout
               </div>
             </div>
             <div class="md-footer__button md-icon">

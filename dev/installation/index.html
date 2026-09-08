@@ -27,7 +27,7 @@
     
     
       
-        <title>Installation - repo-manager</title>
+        <title>Installation - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href=".." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href=".." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -867,6 +867,8 @@
       
         
       
+        
+      
     
     
     
@@ -1012,14 +1014,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/switch-default/" class="md-nav__link">
+      <a href="../reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1096,14 +1126,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/forget/" class="md-nav__link">
+      <a href="../reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1279,7 +1309,7 @@
 <p>The tool is a standalone CLI, best installed globally with
 <a href="https://pipx.pypa.io/">pipx</a> so it stays isolated from your project environments.</p>
 <p>It is installed directly from the Git repository:</p>
-<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/thetechdabbler/repo-manager.git&quot;</span>
+<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"git+https://github.com/thetechdabbler/repo-manager.git"</span>
 </code></pre></div>
 <p>To upgrade later (pipx re-pulls from the same source):</p>
 <div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>upgrade<span class="w"> </span>repo-manager
@@ -1291,24 +1321,26 @@
 same name and fail to build. Always install from the Git URL above.</p>
 </div>
 <p>To install a specific branch, or a local clone you are developing against:</p>
-<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;git+https://github.com/thetechdabbler/repo-manager.git@&lt;branch&gt;&quot;</span>
+<div class="highlight"><pre><span></span><code>pipx<span class="w"> </span>install<span class="w"> </span><span class="s2">"git+https://github.com/thetechdabbler/repo-manager.git@&lt;branch&gt;"</span>
 pipx<span class="w"> </span>install<span class="w"> </span>/path/to/repo-manager
 </code></pre></div>
 <h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>version
-repo-manager<span class="w"> </span><span class="nb">help</span>
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>version
+repo<span class="w"> </span><span class="nb">help</span>
 </code></pre></div>
-<p><code>repo-manager help</code> prints a one-screen manual: every command, the repository states,
+<p><code>repo help</code> prints a one-screen manual: every command, the repository states,
 and the exit codes.</p>
 <h2 id="configuration-location">Configuration location<a class="headerlink" href="#configuration-location" title="Permanent link">&para;</a></h2>
 <p>Profiles are stored under your XDG config directory, one file per workspace:</p>
-<div class="highlight"><pre><span></span><code>~/.config/repo-manager/
+<div class="highlight"><pre><span></span><code>~/.config/repo/
 ├── config.toml            # global settings and the active project
 └── projects/
     └── services.toml      # one profile per workspace
 </code></pre></div>
-<p>Set <code>REPO_MANAGER_HOME</code> to override that location (useful for testing or for keeping
-profiles in a dotfiles repository).</p>
+<p>On first run, an existing <code>~/.config/repo-manager/</code> directory is moved to this new
+location. If both directories exist, <code>repo</code> stops and asks you to resolve them
+manually. Set <code>REPO_HOME</code> to override the new location (useful for testing or for keeping
+projects in a dotfiles repository).</p>
 <p>See <a href="../concepts/configuration/">Configuration</a> for the profile schema.</p>
 
 

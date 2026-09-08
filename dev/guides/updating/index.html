@@ -27,7 +27,7 @@
     
     
       
-        <title>Updating - repo-manager</title>
+        <title>Updating - repo</title>
       
     
     
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="repo-manager" class="md-header__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-header__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
@@ -109,7 +109,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            repo-manager
+            repo
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -369,12 +369,12 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="repo-manager" class="md-nav__button md-logo" aria-label="repo-manager" data-md-component="logo">
+    <a href="../.." title="repo" class="md-nav__button md-logo" aria-label="repo" data-md-component="logo">
       
   <img src="../../assets/logo.svg" alt="logo">
 
     </a>
-    repo-manager
+    repo
   </label>
   
     <div class="md-nav__source">
@@ -618,10 +618,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#switch-default-return-to-the-default-branch" class="md-nav__link">
+  <a href="#default-return-to-the-default-branch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        switch-default — return to the default branch
+        default — return to the default branch
       
     </span>
   </a>
@@ -883,6 +883,8 @@
       
         
       
+        
+      
     
     
     
@@ -1028,14 +1030,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/switch-default/" class="md-nav__link">
+      <a href="../../reference/default/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    switch-default
+    default
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sync/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    sync
   
 
     
@@ -1112,14 +1142,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/forget/" class="md-nav__link">
+      <a href="../../reference/remove/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    forget
+    remove
   
 
     
@@ -1233,10 +1263,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#switch-default-return-to-the-default-branch" class="md-nav__link">
+  <a href="#default-return-to-the-default-branch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        switch-default — return to the default branch
+        default — return to the default branch
       
     </span>
   </a>
@@ -1304,19 +1334,19 @@ a reason.</p>
 <h2 id="update-fast-forward-the-current-branch"><code>update</code> — fast-forward the current branch<a class="headerlink" href="#update-fast-forward-the-current-branch" title="Permanent link">&para;</a></h2>
 <p><code>update</code> fast-forwards the branch each repository is already on. It never switches
 branches.</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>update<span class="w"> </span>--dry-run<span class="w">     </span><span class="c1"># preview the plan, change nothing</span>
-repo-manager<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">         </span><span class="c1"># execute</span>
-repo-manager<span class="w"> </span>update<span class="w"> </span>--group<span class="w"> </span>libraries<span class="w"> </span>--yes
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>update<span class="w"> </span>--dry-run<span class="w">     </span><span class="c1"># preview the plan, change nothing</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">         </span><span class="c1"># execute</span>
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>update<span class="w"> </span>--group<span class="w"> </span>libraries<span class="w"> </span>--yes
 </code></pre></div>
 <p>Only <code>ready</code> repositories (clean, tracking, behind) are updated. See the
 <a href="../../concepts/safety-model/#policy-by-operation">policy table</a> for what happens in
 every other state.</p>
-<h2 id="switch-default-return-to-the-default-branch"><code>switch-default</code> — return to the default branch<a class="headerlink" href="#switch-default-return-to-the-default-branch" title="Permanent link">&para;</a></h2>
-<p><code>switch-default</code> switches each repository to its configured default branch and
+<h2 id="default-return-to-the-default-branch"><code>default</code> — return to the default branch<a class="headerlink" href="#default-return-to-the-default-branch" title="Permanent link">&para;</a></h2>
+<p><code>default</code> switches each repository to its configured default branch and
 fast-forwards it. Useful for returning a whole workspace to a clean baseline after
 feature work.</p>
-<div class="highlight"><pre><span></span><code>repo-manager<span class="w"> </span>switch-default<span class="w"> </span>--dry-run
-repo-manager<span class="w"> </span>switch-default<span class="w"> </span>--select<span class="w"> </span>clean<span class="w"> </span>--yes
+<div class="highlight"><pre><span></span><code>repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>default<span class="w"> </span>--dry-run
+repo<span class="w"> </span>&lt;project&gt;<span class="w"> </span>default<span class="w"> </span>--select<span class="w"> </span>clean<span class="w"> </span>--yes
 </code></pre></div>
 <p>If the default branch itself has diverged from its upstream, the repository is
 reported as failed rather than silently merged.</p>
