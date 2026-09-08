@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 from conftest import git
+from repo_manager.cli import _interactive_choices
 from repo_manager.git_backend import GitBackend
 from repo_manager.models import Operation, Verdict
 from repo_manager.operations import OperationCoordinator
@@ -95,6 +96,55 @@ def test_dry_run_makes_no_change(coord, builder):
     assert result.verdict is Verdict.PROCEED  # "would proceed"
     assert GitBackend().head_sha(repo) == before  # untouched
     assert result.commands == []
+
+
+def test_interactive_plan_fetches_each_repository_once(coord, builder, monkeypatch):
+    first = builder.build_clean_current()
+    second = builder.build_clean_behind()
+    calls = []
+    original_fetch = GitBackend.fetch
+
+    def counted_fetch(self, *args, **kwargs):
+        calls.append(args[0])
+        return original_fetch(self, *args, **kwargs)
+
+    monkeypatch.setattr(GitBackend, "fetch", counted_fetch)
+    plan = coord.build_interactive_plan(
+        [_spec("clean-current", first), _spec("clean-behind", second)]
+    )
+
+    assert len(plan) == 2
+    assert len(calls) == 2
+
+
+def test_interactive_plan_offers_safe_actions_for_clean_repository(coord, builder):
+    repo = builder.build_clean_current()
+    item = coord.build_interactive_plan([_spec("clean-current", repo)])[0]
+
+    assert [option.value for option in _interactive_choices(item)] == [
+        "skip",
+        "update",
+        "sync",
+        "default",
+    ]
+
+
+@pytest.mark.parametrize(
+    "builder_method",
+    [
+        "build_dirty",
+        "build_detached",
+        "build_unreachable_remote",
+        "build_rebase_in_progress",
+    ],
+)
+def test_interactive_plan_only_offers_skip_when_no_action_is_safe(
+    coord, builder, builder_method
+):
+    repo = getattr(builder, builder_method)()
+    item = coord.build_interactive_plan([_spec(builder_method, repo)])[0]
+
+    assert [option.value for option in _interactive_choices(item)] == ["skip"]
 
 
 def test_in_progress_never_mutated(coord, builder):

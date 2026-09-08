@@ -7,6 +7,7 @@ import json
 import pytest
 from typer.testing import CliRunner
 
+import repo_manager.cli as cli
 from repo_manager import config
 from repo_manager.cli import app, normalize_argv
 
@@ -247,6 +248,132 @@ def test_update_requires_yes_non_interactively(home, mutws):
     result = invoke(["fixture", "update", "--repo", "clean-behind"])
     assert result.exit_code == 2
     assert "--yes" in result.stderr
+
+
+def test_interactive_update_requires_terminal(home, mutws):
+    _init(mutws.workspace)
+    result = invoke(["fixture", "update", "--interactive"])
+    assert result.exit_code == 2
+    assert "requires a terminal" in result.stderr
+
+
+def test_interactive_update_rejects_json(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    result = invoke(["fixture", "update", "--interactive", "--json"])
+    assert result.exit_code == 2
+    assert "cannot be combined" in result.stderr
+
+
+def test_interactive_update_applies_selected_update(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+
+    before = GitBackend().head_sha(mutws.workspace / "clean-behind")
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "update")
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "clean-behind"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().head_sha(mutws.workspace / "clean-behind") != before
+    assert "updated" in result.stdout
+
+
+def test_interactive_skip_is_success(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "skip")
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "dirty"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert "skipped" in result.stdout
+
+
+def test_interactive_default_action_switches_branch(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    from conftest import git as raw_git
+    from repo_manager.git_backend import GitBackend
+
+    repo = mutws.workspace / "clean-current"
+    raw_git(repo, "switch", "-q", "-c", "feature/manual")
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "default")
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "clean-current"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().current_branch(repo) == "main"
+
+
+def test_interactive_sync_action_merges_default_branch(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    from conftest import commit_file, git as raw_git
+    from repo_manager.git_backend import GitBackend
+
+    repo = mutws.workspace / "clean-current"
+    raw_git(repo, "switch", "-q", "-c", "feature/manual")
+    commit_file(repo, "feature.txt", "feature\n", "Feature work")
+    seed = mutws.seeds / "clean-current"
+    commit_file(seed, "src/app.py", "VERSION = 2\nSHARED = 'upstream'\n", "Main update")
+    raw_git(seed, "push", "-q", "origin", "main")
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "sync")
+
+    result = invoke(["fixture", "update", "--interactive", "--repo", "clean-current"])
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().current_branch(repo) == "feature/manual"
+    assert GitBackend().head_sha(repo) != GitBackend().head_sha(seed)
+    assert "updated" in result.stdout
+
+
+def test_interactive_failure_continues_to_later_repositories(home, builder, monkeypatch):
+    from conftest import commit_file, git as raw_git
+    from repo_manager.git_backend import GitBackend
+
+    conflict = builder.build_clean_current()
+    raw_git(conflict, "switch", "-q", "-c", "feature/manual")
+    commit_file(conflict, "src/app.py", "VERSION = 1\nSHARED = 'feature'\n", "Feature edit")
+    seed = builder.seeds / "clean-current"
+    commit_file(seed, "src/app.py", "VERSION = 1\nSHARED = 'upstream'\n", "Main update")
+    raw_git(seed, "push", "-q", "origin", "main")
+    later = builder.build_clean_behind()
+    later_before = GitBackend().head_sha(later)
+    _init(builder.workspace)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(
+        cli,
+        "radio_select",
+        lambda title, options: (
+            "update" if any(option.value == "update" for option in options) else "sync"
+        ),
+    )
+
+    result = invoke(["fixture", "update", "--interactive"])
+
+    assert result.exit_code == 1
+    assert "failed" in result.stdout.lower()
+    assert GitBackend().head_sha(later) != later_before
+
+
+def test_interactive_dry_run_does_not_change_repo(home, mutws, monkeypatch):
+    _init(mutws.workspace)
+    from repo_manager.git_backend import GitBackend
+
+    repo = mutws.workspace / "clean-behind"
+    before = GitBackend().head_sha(repo)
+    monkeypatch.setattr(cli, "_interactive_terminal_available", lambda: True)
+    monkeypatch.setattr(cli, "radio_select", lambda title, options: "update")
+
+    result = invoke(
+        ["fixture", "update", "--interactive", "--dry-run", "--repo", "clean-behind"]
+    )
+
+    assert result.exit_code == 0, result.stdout + result.stderr
+    assert GitBackend().head_sha(repo) == before
+    assert "dry run" in result.stdout
 
 
 def test_update_yes_fast_forwards(home, mutws):

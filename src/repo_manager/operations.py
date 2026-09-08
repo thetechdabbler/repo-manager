@@ -35,6 +35,15 @@ class PlanItem:
     sync_rebase: bool = False
 
 
+@dataclass
+class InteractivePlanItem:
+    """One fetched repository with the safe plans available to interactive mode."""
+
+    spec: RepoSpec
+    snapshot: RepositorySnapshot
+    plans: dict[Operation, PlanItem]
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -63,54 +72,92 @@ class OperationCoordinator:
         )
         by_path = {s.identity.relative_path: s for s in snapshots}
 
-        plan: list[PlanItem] = []
+        return [
+            self._plan_from_snapshot(
+                spec,
+                by_path[spec.relative_path],
+                operation,
+                checkout_branch=checkout_branch,
+                stash=stash,
+                sync_rebase=sync_rebase,
+            )
+            for spec in specs
+        ]
+
+    def build_interactive_plan(
+        self,
+        specs: list[RepoSpec],
+        fetch_timeout: float = 30.0,
+        stash: bool = False,
+    ) -> list[InteractivePlanItem]:
+        """Fetch once and derive the safe update, sync, and default choices."""
+        snapshots = self.service.snapshot_all(
+            specs, fetch=True, fetch_timeout=fetch_timeout
+        )
+        by_path = {s.identity.relative_path: s for s in snapshots}
+        result: list[InteractivePlanItem] = []
         for spec in specs:
-            snap = by_path[spec.relative_path]
-            if operation is Operation.UPDATE:
-                decision = policy.decide_update(snap, stash=stash)
-                target = None
-            elif operation is Operation.DEFAULT:
-                decision = policy.decide_switch_default(snap, stash=stash)
-                target = snap.checkout.default_branch
-            elif operation is Operation.SYNC:
-                remote = snap.identity.remote_name
-                default = snap.checkout.default_branch
-                target = (
-                    f"{remote}/{default}"
-                    if remote
-                    and default
-                    and self.backend.branch_exists_remote(
-                        spec.absolute_path, remote, default
-                    )
-                    else None
+            snapshot = by_path[spec.relative_path]
+            plans = {
+                operation: self._plan_from_snapshot(
+                    spec, snapshot, operation, stash=stash
                 )
-                decision = policy.decide_sync(snap, target)
-            else:  # CHECKOUT
-                target = self._resolve_checkout_target(snap, checkout_branch)
-                remote = snap.identity.remote_name
-                exists_local = bool(
-                    target and self.backend.branch_exists_local(spec.absolute_path, target)
+                for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT)
+            }
+            result.append(
+                InteractivePlanItem(spec=spec, snapshot=snapshot, plans=plans)
+            )
+        return result
+
+    def _plan_from_snapshot(
+        self,
+        spec: RepoSpec,
+        snap: RepositorySnapshot,
+        operation: Operation,
+        checkout_branch: str | None = None,
+        stash: bool = False,
+        sync_rebase: bool = False,
+    ) -> PlanItem:
+        if operation is Operation.UPDATE:
+            decision = policy.decide_update(snap, stash=stash)
+            target = None
+        elif operation is Operation.DEFAULT:
+            decision = policy.decide_switch_default(snap, stash=stash)
+            target = snap.checkout.default_branch
+        elif operation is Operation.SYNC:
+            remote = snap.identity.remote_name
+            default = snap.checkout.default_branch
+            target = (
+                f"{remote}/{default}"
+                if remote
+                and default
+                and self.backend.branch_exists_remote(
+                    spec.absolute_path, remote, default
                 )
-                exists_remote = bool(
-                    target
-                    and remote
-                    and self.backend.branch_exists_remote(
-                        spec.absolute_path, remote, target
-                    )
-                )
-                decision = policy.decide_checkout(
-                    snap, target, exists_local, exists_remote
-                )
-            plan.append(
-                PlanItem(
-                    spec=spec,
-                    snapshot=snap,
-                    decision=decision,
-                    target=target,
-                    sync_rebase=sync_rebase,
+                else None
+            )
+            decision = policy.decide_sync(snap, target)
+        else:  # CHECKOUT
+            target = self._resolve_checkout_target(snap, checkout_branch)
+            remote = snap.identity.remote_name
+            exists_local = bool(
+                target and self.backend.branch_exists_local(spec.absolute_path, target)
+            )
+            exists_remote = bool(
+                target
+                and remote
+                and self.backend.branch_exists_remote(
+                    spec.absolute_path, remote, target
                 )
             )
-        return plan
+            decision = policy.decide_checkout(snap, target, exists_local, exists_remote)
+        return PlanItem(
+            spec=spec,
+            snapshot=snap,
+            decision=decision,
+            target=target,
+            sync_rebase=sync_rebase,
+        )
 
     def _resolve_checkout_target(
         self, snap: RepositorySnapshot, branch: str | None
