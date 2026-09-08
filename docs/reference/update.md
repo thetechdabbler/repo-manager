@@ -51,6 +51,15 @@ every state, and [Recovering local work](../guides/recovery.md) for the
   non-blocking scripts.
 - **`--group` / `--repo` / `--select`** narrow the target set.
 - **`--jobs`** sets fetch parallelism.
+- **`--interactive`** visits each selected repository and lets you choose an action
+  with an arrow-key menu. It offers only actions allowed by the safety policy:
+  update the current branch, sync the default branch into the current branch, or
+  switch to the default branch and update. `Skip` is always available.
+
+Interactive choices are applied immediately. The command continues after a failed
+repository and prints a final result table. Use `--dry-run --interactive` to make
+the choices without changing repositories. Interactive mode requires a terminal
+and cannot be combined with `--json`.
 
 ## Options
 
@@ -67,4 +76,6 @@ repo <project> update --dry-run                 # preview, change nothing
 repo <project> update --yes                      # fast-forward the eligible repos
 repo <project> update --group backend --yes
 repo <project> update --stash --repo api --yes
+repo <project> update --interactive              # choose an action per repository
+repo <project> update --interactive --dry-run    # preview manual choices
 ```

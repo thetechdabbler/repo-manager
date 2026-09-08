@@ -17,4 +17,5 @@ repo <project> update [OPTIONS]
 | `--stash` | For dirty repos: stash, fast-forward, then restore (conflict-safe). |
 | `--jobs` | Parallel workers for fetches. |
 | `--json` | Emit JSON instead of a table. |
+| `--interactive` | Choose an update action for each repository with arrow keys. |
 | `--help` | Show this message and exit. |

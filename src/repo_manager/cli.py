@@ -8,6 +8,7 @@ selects repositories, builds a report structure, and hands it to a renderer.
 from __future__ import annotations
 
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -28,7 +29,8 @@ from .config import (
 from .discovery import DEFAULT_EXCLUDES, discover_worktrees
 from .git_backend import GitBackend
 from .models import Operation, ProjectStatus, ProjectsStatusReport, StatusReport
-from .operations import OperationCoordinator
+from .models import OperationResult, Verdict
+from .operations import InteractivePlanItem, OperationCoordinator
 from .output import (
     render_operation_json,
     render_plan_table,
@@ -42,6 +44,7 @@ from .output import (
 )
 from .repository_service import RepoSpec, RepositoryService
 from .summaries import SummaryService
+from .interactive import InteractiveTerminalError, RadioOption, radio_select
 
 app = typer.Typer(
     add_completion=False,
@@ -194,6 +197,30 @@ def selection_matches_summary(rs, expr: str | None) -> bool:
     if not expr:
         return True
     return any(_summary_token_matches(rs, tok) for tok in expr.split(","))
+
+
+def _spec_matches_selection(spec: RepoSpec, expr: str | None) -> bool:
+    """Apply selection expressions to configured repositories without snapshots."""
+    if not expr:
+        return True
+    for token in expr.split(","):
+        token = token.strip()
+        low = token.lower()
+        if low == "all":
+            return True
+        if ":" in token:
+            kind, _, value = token.partition(":")
+            if kind.lower() == "group" and value in spec.groups:
+                return True
+            if kind.lower() == "search" and value.lower() in (
+                f"{spec.name} {spec.relative_path}".lower()
+            ):
+                return True
+            if kind.lower() == "name" and spec.name == value:
+                return True
+        elif token == spec.name or token == spec.relative_path:
+            return True
+    return False
 
 
 # -- commands ------------------------------------------------------------------------
@@ -548,6 +575,213 @@ def _preview_plan(coordinator, plan, operation, profile) -> None:
     render_plan_table(preview, console)
 
 
+@dataclass
+class InteractiveOutcome:
+    relative_path: str
+    action: str
+    result: OperationResult | None = None
+    detail: str = ""
+
+
+def _interactive_choices(
+    item: InteractivePlanItem,
+) -> list[RadioOption]:
+    choices = [RadioOption("skip", "Skip")]
+    labels = {
+        Operation.UPDATE: "Update current branch",
+        Operation.SYNC: "Sync default branch into current branch",
+        Operation.DEFAULT: "Switch to default branch and update",
+    }
+    for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT):
+        plan = item.plans[operation]
+        if plan.decision.verdict is Verdict.PROCEED:
+            choices.append(RadioOption(operation.value, labels[operation]))
+    return choices
+
+
+def _interactive_repo_info(item: InteractivePlanItem) -> None:
+    snap = item.snapshot
+    branch = snap.checkout.current_branch or (
+        f"detached@{(snap.checkout.detached_sha or '')[:8]}"
+    )
+    if not snap.remote.data_is_current:
+        ahead_behind = "unreachable" if snap.remote.fetch_attempted else "no-fetch"
+    else:
+        ahead = snap.remote.ahead_count or 0
+        behind = snap.remote.behind_count or 0
+        ahead_behind = "=" if not ahead and not behind else f"↑{ahead} ↓{behind}"
+    worktree = snap.worktree
+    changes = "clean" if not worktree.is_dirty else (
+        f"{worktree.total_changes} local change(s)"
+    )
+    last_commit = (
+        f"{snap.last_commit.short_sha} {snap.last_commit.subject}"
+        if snap.last_commit
+        else "-"
+    )
+    console.print()
+    console.print(f"[bold]{snap.name}[/bold]  {snap.identity.relative_path}")
+    console.print(
+        f"  Branch: {branch}  State: {snap.classification.value}  "
+        f"Ahead/behind: {ahead_behind}  Changes: {changes}"
+    )
+    console.print(f"  Last commit: {last_commit}")
+    for warning in snap.warnings:
+        console.print(f"  [yellow]! {warning}[/yellow]", highlight=False)
+    unavailable = [
+        item.plans[operation].decision.reason
+        for operation in (Operation.UPDATE, Operation.SYNC, Operation.DEFAULT)
+        if item.plans[operation].decision.verdict is Verdict.SKIPPED
+    ]
+    if unavailable and len(_interactive_choices(item)) == 1:
+        console.print(f"  [yellow]Why no update action: {unavailable[0]}[/yellow]")
+
+
+def _render_interactive_results(
+    outcomes: list[InteractiveOutcome], project_name: str, dry_run: bool
+) -> None:
+    title = f"repo · interactive update · {project_name}"
+    if dry_run:
+        title += "  (dry run — no changes made)"
+    table = Table(title=title, title_style="bold", header_style="bold")
+    table.add_column("Repository")
+    table.add_column("Action")
+    table.add_column("Result")
+    table.add_column("Detail", overflow="fold")
+    for outcome in outcomes:
+        if outcome.result is None:
+            result = "skipped"
+            detail = outcome.detail
+        else:
+            result = outcome.result.verdict.value
+            detail = (
+                outcome.result.planned
+                if outcome.result.verdict in (Verdict.PROCEED, Verdict.UPDATED, Verdict.NOOP)
+                else outcome.result.error or outcome.result.reason
+            )
+        table.add_row(outcome.relative_path, outcome.action, result, detail)
+    console.print()
+    console.print(table)
+
+
+def _interactive_terminal_available() -> bool:
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def _run_interactive_update(
+    profile: Profile,
+    specs: list[RepoSpec],
+    select: Optional[str],
+    dry_run: bool,
+    jobs: Optional[int],
+    stash: bool,
+) -> None:
+    missing = [s for s in specs if not (s.absolute_path / ".git").exists()]
+    live = [s for s in specs if s not in missing]
+    if not live and not missing:
+        raise _fail("no repositories to operate on", EXIT_USAGE)
+
+    worker_count = jobs or profile.policy.jobs
+    coordinator = OperationCoordinator(backend=GitBackend(), jobs=worker_count)
+    interactive_plan = coordinator.build_interactive_plan(
+        live,
+        fetch_timeout=float(profile.policy.fetch_timeout_seconds),
+        stash=stash,
+    )
+    if select:
+        interactive_plan = [
+            item for item in interactive_plan if selection_matches(item.snapshot, select)
+        ]
+    selected_missing = [
+        spec for spec in missing if not select or _spec_matches_selection(spec, select)
+    ]
+
+    by_path = {item.spec.relative_path: item for item in interactive_plan}
+    outcomes: list[InteractiveOutcome] = []
+    failed = False
+    for spec in specs:
+        item = by_path.get(spec.relative_path)
+        if item is None:
+            if select and not _spec_matches_selection(spec, select):
+                continue
+            if spec in selected_missing:
+                console.print()
+                console.print(f"[bold]{spec.name}[/bold]  {spec.relative_path}")
+                console.print("  [yellow]Missing Git worktree; only Skip is available.[/yellow]")
+                try:
+                    choice = radio_select(
+                        "What should happen?",
+                        [RadioOption("skip", "Skip")],
+                    )
+                except (InteractiveTerminalError, KeyboardInterrupt) as exc:
+                    if isinstance(exc, InteractiveTerminalError):
+                        raise _fail(str(exc))
+                    raise typer.Exit(130)
+                outcomes.append(
+                    InteractiveOutcome(
+                        relative_path=spec.relative_path,
+                        action="Skip" if choice == "skip" else choice,
+                        detail="missing Git worktree",
+                    )
+                )
+            continue
+
+        _interactive_repo_info(item)
+        try:
+            choice = radio_select(
+                "What should happen?",
+                _interactive_choices(item),
+            )
+        except InteractiveTerminalError as exc:
+            raise _fail(str(exc))
+        except KeyboardInterrupt:
+            raise typer.Exit(130)
+
+        if choice == "skip":
+            outcomes.append(
+                InteractiveOutcome(
+                    relative_path=item.spec.relative_path,
+                    action="Skip",
+                    detail="skipped by user",
+                )
+            )
+            continue
+
+        operation = Operation(choice)
+        plan = item.plans[operation]
+        report = coordinator.execute(
+            [plan],
+            operation,
+            project_name=profile.name,
+            project_root=str(profile.root),
+            dry_run=dry_run,
+        )
+        result = report.results[0]
+        outcomes.append(
+            InteractiveOutcome(
+                relative_path=item.spec.relative_path,
+                action=next(
+                    option.label
+                    for option in _interactive_choices(item)
+                    if option.value == choice
+                ),
+                result=result,
+            )
+        )
+        if result.verdict is Verdict.FAILED:
+            failed = True
+            console.print(
+                f"[red]Failed[/red] {item.spec.relative_path}: "
+                f"{result.error or 'operation failed'}",
+                highlight=False,
+            )
+
+    if select and not interactive_plan and not selected_missing:
+        raise _fail(f"no repositories matched selection '{select}'", EXIT_USAGE)
+    _render_interactive_results(outcomes, profile.name, dry_run)
+    raise typer.Exit(EXIT_FAILURE if failed else EXIT_OK)
+
+
 @app.command(hidden=True)
 def update(
     project: str = typer.Option(..., "--project", hidden=True),
@@ -568,8 +802,22 @@ def update(
     ),
     jobs: Optional[int] = typer.Option(None, help="Parallel workers for fetches."),
     json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        help="Choose an update action for each repository with arrow keys.",
+    ),
 ) -> None:
     """Fast-forward the current branch of eligible repositories. Never switches branches."""
+    if interactive:
+        if json_out:
+            raise _fail("--interactive cannot be combined with --json")
+        if not _interactive_terminal_available():
+            raise _fail("--interactive requires a terminal")
+        profile = _resolve_profile(project)
+        selected = _select(profile, group, repo)
+        _run_interactive_update(profile, _specs(profile, selected), select, dry_run, jobs, stash)
+        return
     _run_mutation(
         Operation.UPDATE, project, group, repo, select, dry_run, yes, ignore_skips,
         jobs, json_out, stash=stash,
